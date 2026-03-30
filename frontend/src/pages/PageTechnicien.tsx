@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   ticketsListeTechnicienResponse,
   ticketDetailTechnicienResponse,
@@ -11,10 +11,22 @@ import type { baseResponse } from '@shared/types/api/baseApi';
 import { LIBELLE_STATUT, STATUTS_TICKET, type StatutTicket } from '@shared/types/statutsTicket';
 import { api } from '../services/apiService';
 import BadgeStatut from '../components/BadgeStatut';
-import ListeCommentairesTicket from '../components/ListeCommentairesTicket';
+import DetailTicketComplet from '../components/DetailTicketComplet';
+import { formatDateHeure } from '../utils/formatDateHeure';
 
-function PageTechnicien() {
+interface Props {
+  username: string | null;
+  ongletActif: OngletTechnicien;
+}
+
+export type OngletTechnicien = 'tickets_en_cours' | 'tickets_a_traiter';
+
+type Vue = 'liste' | 'detail';
+
+function PageTechnicien({ username, ongletActif }: Props) {
+  const [vue, setVue] = useState<Vue>('liste');
   const [tickets, setTickets] = useState<ticketResumeTechnicien[]>([]);
+  const [idsTicketsPrisEnCharge, setIdsTicketsPrisEnCharge] = useState<number[]>([]);
   const [ticketSelectionne, setTicketSelectionne] = useState<ticketDetailTechnicien | null>(null);
   const [chargement, setChargement] = useState(true);
   const [chargementDetail, setChargementDetail] = useState(false);
@@ -27,24 +39,63 @@ function PageTechnicien() {
   const [statutChoisi, setStatutChoisi] = useState<StatutTicket>('en_attente');
   const [messageStatut, setMessageStatut] = useState('');
 
+  const idsTicketsPrisEnChargeSet = useMemo(() => new Set(idsTicketsPrisEnCharge), [idsTicketsPrisEnCharge]);
+  const ticketsPrisEnCharge = tickets.filter(ticket => idsTicketsPrisEnChargeSet.has(ticket.id));
+  const ticketsATraiter = tickets.filter(ticket => !idsTicketsPrisEnChargeSet.has(ticket.id));
+  const ticketsAffiches = ongletActif === 'tickets_en_cours' ? ticketsPrisEnCharge : ticketsATraiter;
+  const titreListe = ongletActif === 'tickets_en_cours'
+    ? 'Tickets sur lesquels je travaille'
+    : 'Tickets à traiter';
+  const messageListeVide = ongletActif === 'tickets_en_cours'
+    ? 'Aucun ticket en cours de traitement pour le moment.'
+    : 'Aucun ticket disponible à traiter.';
+
+  async function identifierTicketsPrisEnCharge(ticketsCharges: ticketResumeTechnicien[]) {
+    if (!username || ticketsCharges.length === 0) {
+      setIdsTicketsPrisEnCharge([]);
+      return;
+    }
+
+    const details = await Promise.all(
+      ticketsCharges.map(ticket => api.get<ticketDetailTechnicienResponse>(`/technicien/ticket/${ticket.id}`))
+    );
+
+    const ids = details
+      .map(detail => detail.donnees?.ticket)
+      .filter((ticket): ticket is ticketDetailTechnicien => Boolean(ticket))
+      .filter(ticket => ticket.commentaires.some(
+        commentaire => commentaire.role_auteur === 'technicien' && commentaire.username_auteur === username
+      ))
+      .map(ticket => ticket.id);
+
+    setIdsTicketsPrisEnCharge(ids);
+  }
+
   async function chargerTickets() {
     setChargement(true);
     const res = await api.get<ticketsListeTechnicienResponse>('/technicien/tickets');
-    setTickets(res.donnees?.tickets ?? []);
+    const ticketsCharges = res.donnees?.tickets ?? [];
+    setTickets(ticketsCharges);
+    await identifierTicketsPrisEnCharge(ticketsCharges);
     setChargement(false);
   }
 
-  async function ouvrirTicket(id: number) {
+  async function ouvrirTicket(id: number, options?: { preserveMessages?: boolean }) {
+    const preserveMessages = options?.preserveMessages ?? false;
     setChargementDetail(true);
     setTicketSelectionne(null);
-    setMessageCommentaire('');
-    setMessageStatut('');
-    setContenuCommentaire('');
+
+    if (!preserveMessages) {
+      setMessageCommentaire('');
+      setMessageStatut('');
+      setContenuCommentaire('');
+    }
 
     const res = await api.get<ticketDetailTechnicienResponse>(`/technicien/ticket/${id}`);
     if (res.donnees?.ticket) {
       setTicketSelectionne(res.donnees.ticket);
       setStatutChoisi(res.donnees.ticket.statut);
+      setVue('detail');
     }
     setChargementDetail(false);
   }
@@ -66,8 +117,8 @@ function PageTechnicien() {
 
     setContenuCommentaire('');
     setMessageCommentaire('Commentaire ajouté.');
-    await ouvrirTicket(ticketSelectionne.id);
-    chargerTickets();
+    await ouvrirTicket(ticketSelectionne.id, { preserveMessages: true });
+    await chargerTickets();
   }
 
   async function handleChangerStatut(e: React.FormEvent) {
@@ -86,85 +137,100 @@ function PageTechnicien() {
     }
 
     setMessageStatut('Statut mis à jour.');
-    await ouvrirTicket(ticketSelectionne.id);
-    chargerTickets();
+    await ouvrirTicket(ticketSelectionne.id, { preserveMessages: true });
+    await chargerTickets();
+  }
+
+  function renderListe() {
+    return (
+      <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <h3 className="font-semibold text-gray-700 mb-3">{titreListe} ({ticketsAffiches.length})</h3>
+        {ticketsAffiches.length === 0 ? (
+          <p className="text-gray-400 text-sm">{messageListeVide}</p>
+        ) : (
+          <ul className="space-y-2">
+            {ticketsAffiches.map(ticket => (
+              <li key={ticket.id}>
+                <button
+                  onClick={() => ouvrirTicket(ticket.id)}
+                  className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                >
+                  <div className="flex justify-between items-start gap-2">
+                    <span className="text-sm font-medium text-gray-800">
+                      #{ticket.id} - {ticket.sujet}
+                    </span>
+                    <BadgeStatut statut={ticket.statut} />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {ticket.username_auteur} - {formatDateHeure(ticket.date_creation)}
+                  </p>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    );
   }
 
   useEffect(() => {
     chargerTickets();
-  }, []);
+  }, [username]);
+
+  useEffect(() => {
+    setVue('liste');
+    setTicketSelectionne(null);
+    setMessageCommentaire('');
+    setMessageStatut('');
+  }, [ongletActif]);
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-800">Espace technicien</h2>
+      <div className="flex items-center gap-3">
+        <h2 className="text-xl font-bold text-gray-800 flex-1">Espace technicien</h2>
+        {vue === 'detail' && (
+          <button
+            onClick={() => {
+              setVue('liste');
+              setTicketSelectionne(null);
+              setMessageCommentaire('');
+              setMessageStatut('');
+            }}
+            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            ← Retour aux listes
+          </button>
+        )}
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Liste tickets */}
-        <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">Tous les tickets ({tickets.length})</h3>
-          {chargement ? (
-            <p className="text-gray-400 text-sm">Chargement...</p>
-          ) : tickets.length === 0 ? (
-            <p className="text-gray-400 text-sm">Aucun ticket.</p>
-          ) : (
-            <ul className="space-y-2">
-              {tickets.map(t => (
-                <li key={t.id}>
-                  <button
-                    onClick={() => ouvrirTicket(t.id)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${ticketSelectionne?.id === t.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                  >
-                    <div className="flex justify-between items-start gap-2">
-                      <span className="text-sm font-medium text-gray-800 line-clamp-1">
-                        #{t.id} — {t.sujet}
-                      </span>
-                      <BadgeStatut statut={t.statut} />
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {t.username_auteur} · {new Date(t.date_creation).toLocaleDateString('fr-FR')}
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      {chargement && <p className="text-gray-400 text-sm">Chargement...</p>}
 
-        {/* Détail ticket */}
-        <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          {chargementDetail && (
-            <p className="text-gray-400 text-sm">Chargement du ticket...</p>
-          )}
-          {!chargementDetail && !ticketSelectionne && (
-            <p className="text-gray-400 text-sm">Sélectionnez un ticket pour voir le détail.</p>
-          )}
-          {!chargementDetail && ticketSelectionne && (
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between items-start gap-2 mb-1">
-                  <h3 className="font-semibold text-gray-800">{ticketSelectionne.sujet}</h3>
-                  <BadgeStatut statut={ticketSelectionne.statut} />
-                </div>
-                <p className="text-xs text-gray-400 mb-3">
-                  Par {ticketSelectionne.username_auteur} · {new Date(ticketSelectionne.date_creation).toLocaleDateString('fr-FR')}
-                </p>
-                <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
-                  {ticketSelectionne.contenu}
-                </p>
-              </div>
+      {!chargement && vue === 'liste' && (
+        <div className="grid grid-cols-1 gap-6">{renderListe()}</div>
+      )}
 
-              {/* Changer le statut */}
+      {!chargement && vue === 'detail' && chargementDetail && (
+        <p className="text-gray-400 text-sm">Chargement du ticket...</p>
+      )}
+
+      {!chargement && vue === 'detail' && !chargementDetail && !ticketSelectionne && (
+        <p className="text-gray-400 text-sm">Sélectionnez un ticket pour voir le détail.</p>
+      )}
+
+      {!chargement && vue === 'detail' && !chargementDetail && ticketSelectionne && (
+        <DetailTicketComplet
+          ticket={ticketSelectionne}
+          titreCommentaires={`Commentaires (${ticketSelectionne.commentaires.length})`}
+          actions={(
+            <>
               <form onSubmit={handleChangerStatut} className="flex gap-2 items-center">
                 <select
                   value={statutChoisi}
                   onChange={e => setStatutChoisi(e.target.value as StatutTicket)}
                   className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {STATUTS_TICKET.map(s => (
-                    <option key={s} value={s}>{LIBELLE_STATUT[s]}</option>
+                  {STATUTS_TICKET.map(statut => (
+                    <option key={statut} value={statut}>{LIBELLE_STATUT[statut]}</option>
                   ))}
                 </select>
                 <button
@@ -180,16 +246,8 @@ function PageTechnicien() {
                 </p>
               )}
 
-              {/* Commentaires */}
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
-                  Commentaires ({ticketSelectionne.commentaires.length})
-                </h4>
-                <ListeCommentairesTicket commentaires={ticketSelectionne.commentaires} />
-              </div>
-
-              {/* Ajouter commentaire */}
               <form onSubmit={handleCommenter} className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Ajouter un commentaire</label>
                 <textarea
                   value={contenuCommentaire}
                   onChange={e => setContenuCommentaire(e.target.value)}
@@ -210,10 +268,10 @@ function PageTechnicien() {
                   </p>
                 )}
               </form>
-            </div>
+            </>
           )}
-        </section>
-      </div>
+        />
+      )}
     </div>
   );
 }

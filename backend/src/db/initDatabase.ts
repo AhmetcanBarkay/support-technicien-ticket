@@ -6,7 +6,7 @@ import { getBcryptSaltRounds } from "../constants/securite.js";
 // Création du schéma complet adapté au MCD gestion de tickets
 
 async function creerSchema(): Promise<void> {
-    // Table personne — base commune des comptes
+    // Table personne-base commune des comptes
     await query(`
 CREATE TABLE IF NOT EXISTS personne (
     id_personne         INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS personne (
 );
 `);
 
-    // Table ticket — demandes de support créées par les utilisateurs
+    // Table ticket-demandes de support créées par les utilisateurs
     await query(`
 CREATE TABLE IF NOT EXISTS ticket (
     id_ticket       INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS ticket (
 );
 `);
 
-    // Table commentaire — historique des échanges sur un ticket
+    // Table commentaire-historique des échanges sur un ticket
     await query(`
 CREATE TABLE IF NOT EXISTS commentaire (
     id_commentaire  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

@@ -11,7 +11,8 @@ import type {
 import type { baseResponse } from '@shared/types/api/baseApi';
 import { api } from '../services/apiService';
 import BadgeStatut from '../components/BadgeStatut';
-import ListeCommentairesTicket from '../components/ListeCommentairesTicket';
+import DetailTicketComplet from '../components/DetailTicketComplet';
+import { formatDateHeure } from '../utils/formatDateHeure';
 
 type Vue = 'liste' | 'detail' | 'creer';
 
@@ -140,12 +141,12 @@ function PageUtilisateur() {
                   >
                     <div className="flex justify-between items-start gap-2">
                       <span className="text-sm font-medium text-gray-800">
-                        #{t.id} — {t.sujet}
+                        #{t.id}-{t.sujet}
                       </span>
                       <BadgeStatut statut={t.statut} />
                     </div>
                     <p className="text-xs text-gray-400 mt-1">
-                      {new Date(t.date_creation).toLocaleDateString('fr-FR')}
+                      {formatDateHeure(t.date_creation)}
                     </p>
                   </button>
                 </li>
@@ -200,56 +201,36 @@ function PageUtilisateur() {
 
       {/* Vue détail */}
       {vue === 'detail' && ticketOuvert && (
-        <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
-          <div>
-            <div className="flex justify-between items-start gap-2 mb-1">
-              <h3 className="font-semibold text-gray-800">{ticketOuvert.sujet}</h3>
-              <BadgeStatut statut={ticketOuvert.statut} />
-            </div>
-            <p className="text-xs text-gray-400 mb-3">
-              Créé le {new Date(ticketOuvert.date_creation).toLocaleDateString('fr-FR')}
-            </p>
-            <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-4">
-              {ticketOuvert.contenu}
-            </p>
-          </div>
-
-          {/* Commentaires */}
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-3">
-              Historique ({ticketOuvert.commentaires.length} message{ticketOuvert.commentaires.length !== 1 ? 's' : ''})
-            </h4>
-            <ListeCommentairesTicket
-              commentaires={ticketOuvert.commentaires}
-              mode="utilisateur"
-              messageVide="Aucun message pour l'instant."
-            />
-          </div>
-
-          {/* Répondre */}
-          <form onSubmit={handleCommenter} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Ajouter un message</label>
-            <textarea
-              value={commentaire}
-              onChange={e => setCommentaire(e.target.value)}
-              placeholder="Votre message..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              rows={3}
-              required
-            />
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              Envoyer
-            </button>
-            {messageCommentaire && (
-              <p className={`text-xs ${messageCommentaire.includes('ajouté') ? 'text-green-700' : 'text-red-600'}`}>
-                {messageCommentaire}
-              </p>
-            )}
-          </form>
-        </section>
+        <DetailTicketComplet
+          ticket={ticketOuvert}
+          modeCommentaires="utilisateur"
+          titreCommentaires={`Historique (${ticketOuvert.commentaires.length} message${ticketOuvert.commentaires.length !== 1 ? 's' : ''})`}
+          messageCommentairesVide="Aucun message pour l'instant."
+          actions={(
+            <form onSubmit={handleCommenter} className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Ajouter un message</label>
+              <textarea
+                value={commentaire}
+                onChange={e => setCommentaire(e.target.value)}
+                placeholder="Votre message..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                rows={3}
+                required
+              />
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                Envoyer
+              </button>
+              {messageCommentaire && (
+                <p className={`text-xs ${messageCommentaire.includes('ajouté') ? 'text-green-700' : 'text-red-600'}`}>
+                  {messageCommentaire}
+                </p>
+              )}
+            </form>
+          )}
+        />
       )}
     </div>
   );

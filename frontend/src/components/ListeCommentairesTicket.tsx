@@ -7,6 +7,18 @@ interface Props {
     messageVide?: string;
 }
 
+function getLibelleRole(role: string): string {
+    if (role === 'technicien') return 'Technicien';
+    if (role === 'utilisateur') return 'Utilisateur';
+    return role;
+}
+
+function getClassesRole(role: string): string {
+    if (role === 'technicien') return 'bg-blue-100 text-blue-700';
+    if (role === 'utilisateur') return 'bg-gray-200 text-gray-700';
+    return 'bg-gray-200 text-gray-700';
+}
+
 function ListeCommentairesTicket({
     commentaires,
     mode = 'technicien',
@@ -16,39 +28,23 @@ function ListeCommentairesTicket({
         return <p className="text-xs text-gray-400">{messageVide}</p>;
     }
 
-    if (mode === 'utilisateur') {
-        return (
-            <ul className="space-y-3">
-                {commentaires.map(c => (
-                    <li
-                        key={c.id}
-                        className={`rounded-lg p-3 text-sm ${c.role_auteur === 'technicien'
-                            ? 'bg-blue-50 border border-blue-100'
-                            : 'bg-gray-50 border border-gray-100'
-                            }`}
-                    >
-                        <div className="flex justify-between items-center text-xs text-gray-400 mb-1">
-                            <span className="font-medium text-gray-600">
-                                {c.username_auteur}
-                                {c.role_auteur === 'technicien' && (
-                                    <span className="ml-1 text-blue-500">(technicien)</span>
-                                )}
-                            </span>
-                            <span>{formatDateHeure(c.date_envoi)}</span>
-                        </div>
-                        <p className="text-gray-700">{c.contenu}</p>
-                    </li>
-                ))}
-            </ul>
-        );
-    }
-
     return (
-        <ul className="space-y-2 max-h-48 overflow-y-auto">
+        <ul className={`space-y-3 ${mode === 'technicien' ? 'max-h-96 overflow-y-auto' : ''}`}>
             {commentaires.map(c => (
-                <li key={c.id} className="bg-gray-50 rounded-lg p-3 text-sm">
+                <li
+                    key={c.id}
+                    className={`rounded-lg p-3 text-sm ${c.role_auteur === 'technicien'
+                        ? 'bg-blue-50 border border-blue-100'
+                        : 'bg-gray-50 border border-gray-100'
+                        }`}
+                >
                     <div className="flex justify-between items-center text-xs text-gray-400 mb-1">
-                        <span className="font-medium text-gray-600">{c.username_auteur}</span>
+                        <span className="font-medium text-gray-600 inline-flex items-center gap-2">
+                            {c.username_auteur}
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${getClassesRole(c.role_auteur)}`}>
+                                {getLibelleRole(c.role_auteur)}
+                            </span>
+                        </span>
                         <span>{formatDateHeure(c.date_envoi)}</span>
                     </div>
                     <p className="text-gray-700">{c.contenu}</p>
