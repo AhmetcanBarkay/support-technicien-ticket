@@ -4,6 +4,7 @@ import { getPasswordRuleChecks, getPasswordRulesErrors } from '@shared/utils/pas
 import type { Role } from '@shared/types/roles';
 import { api } from '../services/apiService';
 import IndicateurReglesMotDePasse from '../components/IndicateurReglesMotDePasse';
+import logo from '../assets/logo.png';
 
 interface Props {
   onConnexionReussie: (info: { role: Role; username: string }) => void;
@@ -87,10 +88,11 @@ function PageConnexion({ onConnexionReussie }: Props) {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
-
-        <h1 className="text-2xl font-bold text-gray-800 text-center mb-6">
-          Support technicien ticket
-        </h1>
+        <img
+          src={logo}
+          alt="Support technicien ticket"
+          className="w-80 ml-auto mr-auto h-auto mb-4"
+        />
 
         {/* Onglets */}
         <div className="flex border-b border-gray-200 mb-6">
