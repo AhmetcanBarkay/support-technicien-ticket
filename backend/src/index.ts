@@ -8,6 +8,7 @@ import technicienRoutes from "./routes/technicien.js";
 import utilisateurRoutes from "./routes/utilisateur.js";
 import { initDatabase, nettoyerTicketsFermes } from "./db/initDatabase.js";
 import { requireAuth, requireAdmin, requireTechnicien, requireUtilisateur } from "./middlewares/authMiddleware.js";
+import { clientGlobalRateLimiter } from "./middlewares/rateLimitMiddleware.js";
 
 dotenv.config({ path: "../.env" });
 
@@ -24,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/auth", authRoutes);
 app.use("/admin", requireAuth, requireAdmin, adminRoutes);
 app.use("/technicien", requireAuth, requireTechnicien, technicienRoutes);
-app.use("/utilisateur", requireAuth, requireUtilisateur, utilisateurRoutes);
+app.use("/utilisateur", requireAuth, requireUtilisateur, clientGlobalRateLimiter, utilisateurRoutes);
 
 // Route non trouvée
 app.use((req: Request, res: Response) => {
