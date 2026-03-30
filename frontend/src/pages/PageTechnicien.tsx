@@ -11,6 +11,7 @@ import type { baseResponse } from '@shared/types/api/baseApi';
 import { LIBELLE_STATUT, STATUTS_TICKET, type StatutTicket } from '@shared/types/statutsTicket';
 import { api } from '../services/apiService';
 import BadgeStatut from '../components/BadgeStatut';
+import { formatDateHeure } from '../utils/formatDateHeure';
 
 function PageTechnicien() {
   const [tickets, setTickets] = useState<ticketResumeTechnicien[]>([]);
@@ -112,8 +113,8 @@ function PageTechnicien() {
                   <button
                     onClick={() => ouvrirTicket(t.id)}
                     className={`w-full text-left p-3 rounded-lg border transition-colors ${ticketSelectionne?.id === t.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                   >
                     <div className="flex justify-between items-start gap-2">
@@ -192,7 +193,7 @@ function PageTechnicien() {
                       <li key={c.id} className="bg-gray-50 rounded-lg p-3 text-sm">
                         <div className="flex justify-between items-center text-xs text-gray-400 mb-1">
                           <span className="font-medium text-gray-600">{c.username_auteur}</span>
-                          <span>{new Date(c.date_envoi).toLocaleDateString('fr-FR')}</span>
+                          <span>{formatDateHeure(c.date_envoi)}</span>
                         </div>
                         <p className="text-gray-700">{c.contenu}</p>
                       </li>

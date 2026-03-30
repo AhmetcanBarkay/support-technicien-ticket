@@ -11,6 +11,7 @@ import type {
 import type { baseResponse } from '@shared/types/api/baseApi';
 import { api } from '../services/apiService';
 import BadgeStatut from '../components/BadgeStatut';
+import { formatDateHeure } from '../utils/formatDateHeure';
 
 type Vue = 'liste' | 'detail' | 'creer';
 
@@ -226,8 +227,8 @@ function PageUtilisateur() {
                   <li
                     key={c.id}
                     className={`rounded-lg p-3 text-sm ${c.role_auteur === 'technicien'
-                        ? 'bg-blue-50 border border-blue-100'
-                        : 'bg-gray-50 border border-gray-100'
+                      ? 'bg-blue-50 border border-blue-100'
+                      : 'bg-gray-50 border border-gray-100'
                       }`}
                   >
                     <div className="flex justify-between items-center text-xs text-gray-400 mb-1">
@@ -237,7 +238,7 @@ function PageUtilisateur() {
                           <span className="ml-1 text-blue-500">(technicien)</span>
                         )}
                       </span>
-                      <span>{new Date(c.date_envoi).toLocaleDateString('fr-FR')}</span>
+                      <span>{formatDateHeure(c.date_envoi)}</span>
                     </div>
                     <p className="text-gray-700">{c.contenu}</p>
                   </li>
