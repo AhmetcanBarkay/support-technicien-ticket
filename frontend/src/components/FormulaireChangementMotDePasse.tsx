@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { changePasswordBody, changePasswordResponse } from '@shared/types/api/authApi';
-import { getPasswordRulesErrors } from '@shared/utils/passwordRules';
+import { getPasswordRuleChecks, getPasswordRulesErrors } from '@shared/utils/passwordRules';
 import { api } from '../services/apiService';
+import IndicateurReglesMotDePasse from './IndicateurReglesMotDePasse';
 
 interface Props {
     onSucces?: () => void;
@@ -14,6 +15,9 @@ function FormulaireChangementMotDePasse({ onSucces }: Props) {
     const [messageErreur, setMessageErreur] = useState('');
     const [messageSucces, setMessageSucces] = useState('');
     const [chargement, setChargement] = useState(false);
+    const reglesMotDePasse = getPasswordRuleChecks(nouveauMotDePasse);
+    const motDePasseValide = reglesMotDePasse.every(regle => regle.valid);
+    const confirmationValide = confirmation === nouveauMotDePasse;
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -23,6 +27,11 @@ function FormulaireChangementMotDePasse({ onSucces }: Props) {
         const erreursRegles = getPasswordRulesErrors(nouveauMotDePasse);
         if (erreursRegles.length > 0) {
             setMessageErreur(`Mot de passe invalide :\n- ${erreursRegles.join('\n- ')}`);
+            return;
+        }
+
+        if (!confirmationValide) {
+            setMessageErreur('La confirmation doit être identique au nouveau mot de passe');
             return;
         }
 
@@ -94,6 +103,11 @@ function FormulaireChangementMotDePasse({ onSucces }: Props) {
                     />
                 </div>
 
+                <IndicateurReglesMotDePasse
+                    motDePasse={nouveauMotDePasse}
+                    confirmation={confirmation}
+                />
+
                 {messageErreur && (
                     <p className="text-sm text-red-600 whitespace-pre-line">{messageErreur}</p>
                 )}
@@ -103,7 +117,7 @@ function FormulaireChangementMotDePasse({ onSucces }: Props) {
 
                 <button
                     type="submit"
-                    disabled={chargement}
+                    disabled={chargement || !motDePasseValide || !confirmationValide}
                     className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
                     {chargement ? 'Enregistrement...' : 'Mettre à jour le mot de passe'}
