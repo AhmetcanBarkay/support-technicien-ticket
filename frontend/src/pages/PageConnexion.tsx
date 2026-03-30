@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { loginBody, loginResponse, registerBody, registerResponse } from '@shared/types/api/authApi';
 import type { Role } from '@shared/types/roles';
-import { api } from '../api/apiHelper';
+import { api } from '../services/apiService';
 
 interface Props {
   onConnexionReussie: (info: { role: Role; username: string }) => void;
@@ -78,21 +78,19 @@ function PageConnexion({ onConnexionReussie }: Props) {
         {/* Onglets */}
         <div className="flex border-b border-gray-200 mb-6">
           <button
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              onglet === 'connexion'
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${onglet === 'connexion'
                 ? 'border-b-2 border-blue-600 text-blue-600'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
             onClick={() => { setOnglet('connexion'); setErreur(''); }}
           >
             Connexion
           </button>
           <button
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              onglet === 'inscription'
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${onglet === 'inscription'
                 ? 'border-b-2 border-blue-600 text-blue-600'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
+              }`}
             onClick={() => { setOnglet('inscription'); setErreur(''); }}
           >
             Créer un compte

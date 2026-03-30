@@ -9,24 +9,10 @@ import type {
   ajouterCommentaireUtilisateurBody
 } from '@shared/types/api/utilisateurApi';
 import type { baseResponse } from '@shared/types/api/baseApi';
-import { LIBELLE_STATUT, type StatutTicket } from '@shared/types/statutsTicket';
-import { api } from '../api/apiHelper';
+import { api } from '../services/apiService';
+import BadgeStatut from '../components/BadgeStatut';
 
 type Vue = 'liste' | 'detail' | 'creer';
-
-function BadgeStatut({ statut }: { statut: StatutTicket }) {
-  const couleurs: Record<StatutTicket, string> = {
-    en_attente: 'bg-yellow-100 text-yellow-800',
-    en_cours: 'bg-blue-100 text-blue-800',
-    resolu: 'bg-green-100 text-green-800',
-    non_resolu: 'bg-red-100 text-red-800'
-  };
-  return (
-    <span className={`text-xs font-medium px-2 py-1 rounded-full ${couleurs[statut]}`}>
-      {LIBELLE_STATUT[statut]}
-    </span>
-  );
-}
 
 function PageUtilisateur() {
   const [vue, setVue] = useState<Vue>('liste');
@@ -239,11 +225,10 @@ function PageUtilisateur() {
                 {ticketOuvert.commentaires.map(c => (
                   <li
                     key={c.id}
-                    className={`rounded-lg p-3 text-sm ${
-                      c.role_auteur === 'technicien'
+                    className={`rounded-lg p-3 text-sm ${c.role_auteur === 'technicien'
                         ? 'bg-blue-50 border border-blue-100'
                         : 'bg-gray-50 border border-gray-100'
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-center text-xs text-gray-400 mb-1">
                       <span className="font-medium text-gray-600">

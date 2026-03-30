@@ -9,21 +9,8 @@ import type {
 } from '@shared/types/api/technicienApi';
 import type { baseResponse } from '@shared/types/api/baseApi';
 import { LIBELLE_STATUT, STATUTS_TICKET, type StatutTicket } from '@shared/types/statutsTicket';
-import { api } from '../api/apiHelper';
-
-function BadgeStatut({ statut }: { statut: StatutTicket }) {
-  const couleurs: Record<StatutTicket, string> = {
-    en_attente: 'bg-yellow-100 text-yellow-800',
-    en_cours: 'bg-blue-100 text-blue-800',
-    resolu: 'bg-green-100 text-green-800',
-    non_resolu: 'bg-red-100 text-red-800'
-  };
-  return (
-    <span className={`text-xs font-medium px-2 py-1 rounded-full ${couleurs[statut]}`}>
-      {LIBELLE_STATUT[statut]}
-    </span>
-  );
-}
+import { api } from '../services/apiService';
+import BadgeStatut from '../components/BadgeStatut';
 
 function PageTechnicien() {
   const [tickets, setTickets] = useState<ticketResumeTechnicien[]>([]);
@@ -124,11 +111,10 @@ function PageTechnicien() {
                 <li key={t.id}>
                   <button
                     onClick={() => ouvrirTicket(t.id)}
-                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                      ticketSelectionne?.id === t.id
+                    className={`w-full text-left p-3 rounded-lg border transition-colors ${ticketSelectionne?.id === t.id
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-start gap-2">
                       <span className="text-sm font-medium text-gray-800 line-clamp-1">

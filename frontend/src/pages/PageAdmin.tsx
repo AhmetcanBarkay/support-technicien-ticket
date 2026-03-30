@@ -6,7 +6,7 @@ import type {
   technicienListResponse,
   technicienItem
 } from '@shared/types/api/adminApi';
-import { api } from '../api/apiHelper';
+import { api } from '../services/apiService';
 
 function PageAdmin() {
   const [techniciens, setTechniciens] = useState<technicienItem[]>([]);

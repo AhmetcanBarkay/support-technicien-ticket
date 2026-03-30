@@ -1,7 +1,7 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-export const AUTH_INVALID_EVENT = 'app:auth-invalide';
+const URL_API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000";
+export const AUTH_INVALID_EVENT = "app:auth-invalide";
 
-type MethodeHttp = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+type MethodeHttp = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 interface OptionsRequete<T = unknown> {
     methode?: MethodeHttp;
@@ -16,23 +16,23 @@ interface RetourRequete<R = unknown> {
 }
 
 function extraireRaison(data: unknown): string {
-    if (!data || typeof data !== 'object') return '';
+    if (!data || typeof data !== "object") return "";
     const raison = (data as { reason?: unknown }).reason;
-    return typeof raison === 'string' ? raison : '';
+    return typeof raison === "string" ? raison : "";
 }
 
-function devraitDeconnecter(statut: number | undefined, data: unknown, avaitToken: boolean): boolean {
+function doitDeconnecter(statut: number | undefined, data: unknown, avaitToken: boolean): boolean {
     if (!avaitToken) return false;
     const raison = extraireRaison(data).toLowerCase();
     return statut === 401 ||
-        raison.includes('token invalide') ||
-        raison.includes('authentification requise') ||
-        raison.includes('non authentifié');
+        raison.includes("token invalide") ||
+        raison.includes("authentification requise") ||
+        raison.includes("non authentifié");
 }
 
 function deconnecterForce() {
-    localStorage.removeItem('token');
-    if (typeof window !== 'undefined') {
+    localStorage.removeItem("token");
+    if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent(AUTH_INVALID_EVENT));
     }
 }
@@ -41,18 +41,18 @@ async function requete<R, T = unknown>(
     endpoint: string,
     options: OptionsRequete<T> = {}
 ): Promise<RetourRequete<R>> {
-    const { methode = 'GET', headers = {}, corps } = options;
+    const { methode = "GET", headers = {}, corps } = options;
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     const avaitToken = Boolean(token);
     const headersAuth: Record<string, string> = token
-        ? { 'Authorization': `Bearer ${token}` }
+        ? { Authorization: `Bearer ${token}` }
         : {};
 
     const config: RequestInit = {
         method: methode,
         headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             ...headersAuth,
             ...headers
         }
@@ -67,7 +67,7 @@ async function requete<R, T = unknown>(
     let erreur: string | undefined;
 
     try {
-        const reponse = await fetch(`${API_BASE_URL}${endpoint}`, config);
+        const reponse = await fetch(`${URL_API_BASE}${endpoint}`, config);
         statut = reponse.status;
 
         const texte = await reponse.text();
@@ -75,15 +75,15 @@ async function requete<R, T = unknown>(
             try {
                 donnees = JSON.parse(texte) as R;
             } catch {
-                erreur = 'Réponse invalide du serveur';
+                erreur = "Réponse invalide du serveur";
             }
         }
 
-        if (devraitDeconnecter(statut, donnees, avaitToken)) {
+        if (doitDeconnecter(statut, donnees, avaitToken)) {
             deconnecterForce();
         }
     } catch (err: unknown) {
-        erreur = err instanceof Error ? err.message : 'Erreur réseau';
+        erreur = err instanceof Error ? err.message : "Erreur réseau";
     }
 
     return { statut, donnees, erreur };
@@ -91,14 +91,14 @@ async function requete<R, T = unknown>(
 
 export const api = {
     get: <R>(endpoint: string, headers?: Record<string, string>) =>
-        requete<R>(endpoint, { methode: 'GET', headers }),
+        requete<R>(endpoint, { methode: "GET", headers }),
 
     post: <T, R>(endpoint: string, corps: T, headers?: Record<string, string>) =>
-        requete<R, T>(endpoint, { methode: 'POST', corps, headers }),
+        requete<R, T>(endpoint, { methode: "POST", corps, headers }),
 
     put: <T, R>(endpoint: string, corps: T, headers?: Record<string, string>) =>
-        requete<R, T>(endpoint, { methode: 'PUT', corps, headers }),
+        requete<R, T>(endpoint, { methode: "PUT", corps, headers }),
 
     delete: <R>(endpoint: string, headers?: Record<string, string>) =>
-        requete<R>(endpoint, { methode: 'DELETE', headers })
+        requete<R>(endpoint, { methode: "DELETE", headers })
 };
