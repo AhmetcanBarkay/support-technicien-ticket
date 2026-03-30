@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS personne (
     id_personne         INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     identifiant         VARCHAR(50) NOT NULL UNIQUE,
     mdpbcrypt           VARCHAR(60) NOT NULL,
-    token_personne      VARCHAR(50) NOT NULL UNIQUE,
+    token               VARCHAR(50) NOT NULL UNIQUE,
     role                VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'technicien', 'utilisateur')),
     date_creation       TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -72,10 +72,10 @@ async function garantirAdmin(): Promise<void> {
     const existing = await query<{
         id_personne: number;
         mdpbcrypt: string;
-        token_personne: string;
+        token: string;
         role: string;
     }>(
-        "SELECT id_personne, mdpbcrypt, token_personne, role FROM personne WHERE identifiant = $1 LIMIT 1",
+        "SELECT id_personne, mdpbcrypt, token, role FROM personne WHERE identifiant = $1 LIMIT 1",
         [adminUsername]
     );
 
@@ -83,7 +83,7 @@ async function garantirAdmin(): Promise<void> {
         const hash = await bcrypt.hash(adminPassword, getBcryptSaltRounds());
         const token = await generateUniqueToken(50);
         await query(
-            "INSERT INTO personne (identifiant, mdpbcrypt, token_personne, role) VALUES ($1, $2, $3, 'admin')",
+            "INSERT INTO personne (identifiant, mdpbcrypt, token, role) VALUES ($1, $2, $3, 'admin')",
             [adminUsername, hash, token]
         );
         console.log(`Compte admin créé : ${adminUsername}`);

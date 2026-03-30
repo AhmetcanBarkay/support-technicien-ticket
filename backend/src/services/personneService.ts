@@ -11,7 +11,7 @@ interface DbPersonneRow {
     id_personne: number;
     identifiant: string;
     mdpbcrypt: string;
-    token_personne: string;
+    token: string;
     role: Role;
     date_creation: string;
 }
@@ -21,7 +21,7 @@ function versPersonne(row: DbPersonneRow): Personne {
         id: row.id_personne,
         username: row.identifiant,
         hashedPassword: row.mdpbcrypt,
-        token: row.token_personne,
+        token: row.token,
         role: row.role,
         date_creation: new Date(row.date_creation)
     };
@@ -42,7 +42,7 @@ export async function generateUniqueToken(longueur: number = 50): Promise<string
     for (let i = 0; i < 20; i++) {
         const token = genererToken(longueur);
         const existing = await query<{ id_personne: number }>(
-            "SELECT id_personne FROM personne WHERE token_personne = $1 LIMIT 1",
+            "SELECT id_personne FROM personne WHERE token = $1 LIMIT 1",
             [token]
         );
         if (existing.rows.length === 0) return token;
@@ -83,7 +83,7 @@ export function genererMotDePasse(longueur: number = 12): string {
 
 export async function getPersonneParToken(token: string): Promise<Personne | undefined> {
     const result = await query<DbPersonneRow>(
-        "SELECT id_personne, identifiant, mdpbcrypt, token_personne, role, date_creation FROM personne WHERE token_personne = $1 LIMIT 1",
+        "SELECT id_personne, identifiant, mdpbcrypt, token, role, date_creation FROM personne WHERE token = $1 LIMIT 1",
         [token]
     );
     if (result.rows.length === 0) return undefined;
@@ -92,7 +92,7 @@ export async function getPersonneParToken(token: string): Promise<Personne | und
 
 export async function getPersonneParId(id: number): Promise<Personne | undefined> {
     const result = await query<DbPersonneRow>(
-        "SELECT id_personne, identifiant, mdpbcrypt, token_personne, role, date_creation FROM personne WHERE id_personne = $1 LIMIT 1",
+        "SELECT id_personne, identifiant, mdpbcrypt, token, role, date_creation FROM personne WHERE id_personne = $1 LIMIT 1",
         [id]
     );
     if (result.rows.length === 0) return undefined;
@@ -101,7 +101,7 @@ export async function getPersonneParId(id: number): Promise<Personne | undefined
 
 export async function getPersonneParIdentifiant(identifiant: string): Promise<Personne | undefined> {
     const result = await query<DbPersonneRow>(
-        "SELECT id_personne, identifiant, mdpbcrypt, token_personne, role, date_creation FROM personne WHERE LOWER(identifiant) = $1 LIMIT 1",
+        "SELECT id_personne, identifiant, mdpbcrypt, token, role, date_creation FROM personne WHERE LOWER(identifiant) = $1 LIMIT 1",
         [identifiant.trim().toLowerCase()]
     );
     if (result.rows.length === 0) return undefined;
@@ -141,7 +141,7 @@ export async function creerPersonne(
 
         const token = await generateUniqueToken(50);
         const inserted = await query<DbPersonneRow>(
-            "INSERT INTO personne (identifiant, mdpbcrypt, token_personne, role) VALUES ($1, $2, $3, $4) RETURNING id_personne, identifiant, mdpbcrypt, token_personne, role, date_creation",
+            "INSERT INTO personne (identifiant, mdpbcrypt, token, role) VALUES ($1, $2, $3, $4) RETURNING id_personne, identifiant, mdpbcrypt, token, role, date_creation",
             [identifiant.trim(), hash, token, role]
         );
 
@@ -173,7 +173,7 @@ export async function supprimerPersonneParId(id: number): Promise<"success" | "n
 
 export async function getPersonnesParRole(role: Role): Promise<Personne[]> {
     const result = await query<DbPersonneRow>(
-        "SELECT id_personne, identifiant, mdpbcrypt, token_personne, role, date_creation FROM personne WHERE role = $1 ORDER BY id_personne ASC",
+        "SELECT id_personne, identifiant, mdpbcrypt, token, role, date_creation FROM personne WHERE role = $1 ORDER BY id_personne ASC",
         [role]
     );
     return result.rows.map(versPersonne);
@@ -204,7 +204,7 @@ export async function changerMotDePasse(
         const hash = await bcrypt.hash(nouveauMotDePasse, getBcryptSaltRounds());
         const token = await generateUniqueToken(50);
         await query(
-            "UPDATE personne SET mdpbcrypt = $1, token_personne = $2 WHERE id_personne = $3",
+            "UPDATE personne SET mdpbcrypt = $1, token = $2 WHERE id_personne = $3",
             [hash, token, idPersonne]
         );
         return { status: "success", token };
