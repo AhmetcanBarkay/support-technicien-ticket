@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import type { loginBody, loginResponse, registerBody, registerResponse } from '@shared/types/api/authApi';
+import { getPasswordRuleChecks, getPasswordRulesErrors } from '@shared/utils/passwordRules';
 import type { Role } from '@shared/types/roles';
 import { api } from '../services/apiService';
+import IndicateurReglesMotDePasse from '../components/IndicateurReglesMotDePasse';
 
 interface Props {
   onConnexionReussie: (info: { role: Role; username: string }) => void;
@@ -23,6 +25,9 @@ function PageConnexion({ onConnexionReussie }: Props) {
 
   const [erreur, setErreur] = useState('');
   const [chargement, setChargement] = useState(false);
+  const reglesMotDePasseInscription = getPasswordRuleChecks(motDePasseInscription);
+  const motDePasseInscriptionValide = reglesMotDePasseInscription.every(regle => regle.valid);
+  const confirmationInscriptionValide = confirmation === motDePasseInscription;
 
   async function handleConnexion(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +53,18 @@ function PageConnexion({ onConnexionReussie }: Props) {
   async function handleInscription(e: React.FormEvent) {
     e.preventDefault();
     setErreur('');
+
+    const erreursRegles = getPasswordRulesErrors(motDePasseInscription);
+    if (erreursRegles.length > 0) {
+      setErreur(`Mot de passe invalide :\n- ${erreursRegles.join('\n- ')}`);
+      return;
+    }
+
+    if (!confirmationInscriptionValide) {
+      setErreur('La confirmation doit être identique au mot de passe');
+      return;
+    }
+
     setChargement(true);
 
     const res = await api.post<registerBody, registerResponse>('/auth/inscription', {
@@ -79,8 +96,8 @@ function PageConnexion({ onConnexionReussie }: Props) {
         <div className="flex border-b border-gray-200 mb-6">
           <button
             className={`flex-1 py-2 text-sm font-medium transition-colors ${onglet === 'connexion'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
               }`}
             onClick={() => { setOnglet('connexion'); setErreur(''); }}
           >
@@ -88,8 +105,8 @@ function PageConnexion({ onConnexionReussie }: Props) {
           </button>
           <button
             className={`flex-1 py-2 text-sm font-medium transition-colors ${onglet === 'inscription'
-                ? 'border-b-2 border-blue-600 text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
               }`}
             onClick={() => { setOnglet('inscription'); setErreur(''); }}
           >
@@ -190,9 +207,14 @@ function PageConnexion({ onConnexionReussie }: Props) {
                 required
               />
             </div>
+
+            <IndicateurReglesMotDePasse
+              motDePasse={motDePasseInscription}
+              confirmation={confirmation}
+            />
             <button
               type="submit"
-              disabled={chargement}
+              disabled={chargement || !motDePasseInscriptionValide || !confirmationInscriptionValide}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
             >
               {chargement ? 'Inscription...' : "Créer mon compte"}
