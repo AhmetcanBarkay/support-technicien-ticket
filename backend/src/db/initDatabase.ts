@@ -27,10 +27,11 @@ CREATE TABLE IF NOT EXISTS ticket (
     statut          VARCHAR(20) NOT NULL DEFAULT 'en_attente'
                     CHECK (statut IN ('en_attente', 'en_cours', 'resolu', 'non_resolu')),
     date_creation   TIMESTAMP NOT NULL DEFAULT NOW(),
+    date_dernier_action TIMESTAMP NOT NULL DEFAULT NOW(),
+    fermee          BOOLEAN NOT NULL DEFAULT FALSE,
     id_utilisateur  INTEGER NOT NULL REFERENCES personne(id_personne) ON DELETE CASCADE
 );
 `);
-
     // Table commentaire-historique des échanges sur un ticket
     await query(`
 CREATE TABLE IF NOT EXISTS commentaire (
@@ -40,6 +41,22 @@ CREATE TABLE IF NOT EXISTS commentaire (
     id_ticket       INTEGER NOT NULL REFERENCES ticket(id_ticket) ON DELETE CASCADE,
     id_personne     INTEGER NOT NULL REFERENCES personne(id_personne) ON DELETE CASCADE
 );
+`);
+
+    await query(`
+CREATE OR REPLACE FUNCTION nettoyer_tickets_fermes()
+RETURNS INTEGER AS $$
+DECLARE
+    nb_supprimes INTEGER;
+BEGIN
+    DELETE FROM ticket
+    WHERE fermee = TRUE
+      AND date_dernier_action <= NOW() - INTERVAL '7 days';
+
+    GET DIAGNOSTICS nb_supprimes = ROW_COUNT;
+    RETURN nb_supprimes;
+END;
+$$ LANGUAGE plpgsql;
 `);
 }
 
@@ -91,6 +108,11 @@ async function garantirAdmin(): Promise<void> {
 export async function initDatabase(): Promise<void> {
     await creerSchema();
     await garantirAdmin();
+}
+
+export async function nettoyerTicketsFermes(): Promise<number> {
+    const result = await query<{ nb: number }>("SELECT nettoyer_tickets_fermes() AS nb");
+    return Number(result.rows[0]?.nb ?? 0);
 }
 
 export async function closeDatabase(): Promise<void> {

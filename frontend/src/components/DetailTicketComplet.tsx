@@ -11,6 +11,8 @@ interface TicketDetailCommun {
     contenu: string;
     statut: StatutTicket;
     date_creation: string;
+    date_dernier_action: string;
+    fermee: boolean;
     commentaires: commentaireItem[];
     username_auteur?: string;
 }
@@ -38,12 +40,22 @@ function DetailTicketComplet({
             <div>
                 <div className="flex justify-between items-start gap-2 mb-1">
                     <h3 className="font-semibold text-gray-800">#{ticket.id} - {ticket.sujet}</h3>
-                    <BadgeStatut statut={ticket.statut} />
+                    <div className="flex items-center gap-2">
+                        <BadgeStatut statut={ticket.statut} />
+                        {ticket.fermee && (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-800 text-white">
+                                Fermé
+                            </span>
+                        )}
+                    </div>
                 </div>
                 <p className="text-xs text-gray-400 mb-3">
                     {ticket.username_auteur
                         ? `Par ${ticket.username_auteur} - Créé le ${formatDateHeure(ticket.date_creation)}`
                         : `Créé le ${formatDateHeure(ticket.date_creation)}`}
+                </p>
+                <p className="text-xs text-gray-400 mb-3">
+                    Dernière action le {formatDateHeure(ticket.date_dernier_action)}
                 </p>
                 <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-4">
                     {ticket.contenu}

@@ -6,12 +6,14 @@ import type {
   ticketDetailUtilisateur,
   creerTicketBody,
   creerTicketResponse,
-  ajouterCommentaireUtilisateurBody
+  ajouterCommentaireUtilisateurBody,
+  fermerTicketUtilisateurBody
 } from '@shared/types/api/utilisateurApi';
 import type { baseResponse } from '@shared/types/api/baseApi';
 import { api } from '../services/apiService';
 import BadgeStatut from '../components/BadgeStatut';
 import DetailTicketComplet from '../components/DetailTicketComplet';
+import ActionsTicket from '../components/ActionsTicket';
 import { formatDateHeure } from '../utils/formatDateHeure';
 
 type Vue = 'liste' | 'detail' | 'creer';
@@ -30,6 +32,7 @@ function PageUtilisateur() {
   // Commentaire
   const [commentaire, setCommentaire] = useState('');
   const [messageCommentaire, setMessageCommentaire] = useState('');
+  const [messageFermeture, setMessageFermeture] = useState('');
 
   async function chargerMesTickets() {
     setChargement(true);
@@ -44,6 +47,7 @@ function PageUtilisateur() {
       setTicketOuvert(res.donnees.ticket);
       setCommentaire('');
       setMessageCommentaire('');
+      setMessageFermeture('');
       setVue('detail');
     }
   }
@@ -66,7 +70,7 @@ function PageUtilisateur() {
     setContenu('');
     setMessageCreation('Ticket créé avec succès.');
     await chargerMesTickets();
-    setTimeout(() => setVue('liste'), 1000);
+    setVue('liste');
   }
 
   async function handleCommenter(e: React.FormEvent) {
@@ -87,6 +91,29 @@ function PageUtilisateur() {
     setCommentaire('');
     setMessageCommentaire('Commentaire ajouté.');
     await ouvrirTicket(ticketOuvert.id);
+  }
+
+  async function handleFermerTicket() {
+    if (!ticketOuvert) return;
+
+    const confirmation = window.confirm('Confirmer la fermeture de ce ticket ?');
+    if (!confirmation) return;
+
+    setMessageFermeture('');
+
+    const res = await api.post<fermerTicketUtilisateurBody, baseResponse>(
+      '/utilisateur/ticket/fermer',
+      { ticketId: ticketOuvert.id }
+    );
+
+    if (!res.donnees?.success) {
+      setMessageFermeture(res.donnees?.reason ?? res.erreur ?? 'Erreur');
+      return;
+    }
+
+    setMessageFermeture('Ticket fermé.');
+    await ouvrirTicket(ticketOuvert.id);
+    await chargerMesTickets();
   }
 
   useEffect(() => {
@@ -143,7 +170,14 @@ function PageUtilisateur() {
                       <span className="text-sm font-medium text-gray-800">
                         #{t.id}-{t.sujet}
                       </span>
-                      <BadgeStatut statut={t.statut} />
+                      <div className="flex items-center gap-2">
+                        <BadgeStatut statut={t.statut} />
+                        {t.fermee && (
+                          <span className="px-2 py-1 rounded-full text-[11px] font-medium bg-gray-800 text-white">
+                            Fermé
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p className="text-xs text-gray-400 mt-1">
                       {formatDateHeure(t.date_creation)}
@@ -207,28 +241,16 @@ function PageUtilisateur() {
           titreCommentaires={`Historique (${ticketOuvert.commentaires.length} message${ticketOuvert.commentaires.length !== 1 ? 's' : ''})`}
           messageCommentairesVide="Aucun message pour l'instant."
           actions={(
-            <form onSubmit={handleCommenter} className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Ajouter un message</label>
-              <textarea
-                value={commentaire}
-                onChange={e => setCommentaire(e.target.value)}
-                placeholder="Votre message..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows={3}
-                required
-              />
-              <button
-                type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-              >
-                Envoyer
-              </button>
-              {messageCommentaire && (
-                <p className={`text-xs ${messageCommentaire.includes('ajouté') ? 'text-green-700' : 'text-red-600'}`}>
-                  {messageCommentaire}
-                </p>
-              )}
-            </form>
+            <ActionsTicket
+              mode="utilisateur"
+              fermee={ticketOuvert.fermee}
+              commentaire={commentaire}
+              onCommentaireChange={setCommentaire}
+              onCommenter={handleCommenter}
+              onFermerTicket={handleFermerTicket}
+              messageCommentaire={messageCommentaire}
+              messageFermeture={messageFermeture}
+            />
           )}
         />
       )}

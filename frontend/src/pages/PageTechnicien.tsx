@@ -5,13 +5,15 @@ import type {
   ticketResumeTechnicien,
   ticketDetailTechnicien,
   changerStatutBody,
-  ajouterCommentaireTechnicienBody
+  ajouterCommentaireTechnicienBody,
+  fermerTicketTechnicienBody
 } from '@shared/types/api/technicienApi';
 import type { baseResponse } from '@shared/types/api/baseApi';
-import { LIBELLE_STATUT, STATUTS_TICKET, type StatutTicket } from '@shared/types/statutsTicket';
+import type { StatutTicket } from '@shared/types/statutsTicket';
 import { api } from '../services/apiService';
 import BadgeStatut from '../components/BadgeStatut';
 import DetailTicketComplet from '../components/DetailTicketComplet';
+import ActionsTicket from '../components/ActionsTicket';
 import { formatDateHeure } from '../utils/formatDateHeure';
 
 interface Props {
@@ -38,10 +40,11 @@ function PageTechnicien({ username, ongletActif }: Props) {
   // Changement statut
   const [statutChoisi, setStatutChoisi] = useState<StatutTicket>('en_attente');
   const [messageStatut, setMessageStatut] = useState('');
+  const [messageFermeture, setMessageFermeture] = useState('');
 
   const idsTicketsPrisEnChargeSet = useMemo(() => new Set(idsTicketsPrisEnCharge), [idsTicketsPrisEnCharge]);
   const ticketsPrisEnCharge = tickets.filter(ticket => idsTicketsPrisEnChargeSet.has(ticket.id));
-  const ticketsATraiter = tickets.filter(ticket => !idsTicketsPrisEnChargeSet.has(ticket.id));
+  const ticketsATraiter = tickets.filter(ticket => !idsTicketsPrisEnChargeSet.has(ticket.id) && !ticket.fermee);
   const ticketsAffiches = ongletActif === 'tickets_en_cours' ? ticketsPrisEnCharge : ticketsATraiter;
   const titreListe = ongletActif === 'tickets_en_cours'
     ? 'Tickets sur lesquels je travaille'
@@ -88,13 +91,25 @@ function PageTechnicien({ username, ongletActif }: Props) {
     if (!preserveMessages) {
       setMessageCommentaire('');
       setMessageStatut('');
+      setMessageFermeture('');
       setContenuCommentaire('');
     }
 
     const res = await api.get<ticketDetailTechnicienResponse>(`/technicien/ticket/${id}`);
     if (res.donnees?.ticket) {
-      setTicketSelectionne(res.donnees.ticket);
-      setStatutChoisi(res.donnees.ticket.statut);
+      const ticketDetail = res.donnees.ticket;
+      setTicketSelectionne(ticketDetail);
+      setStatutChoisi(ticketDetail.statut);
+      setTickets(prevTickets => prevTickets.map(ticket => (
+        ticket.id === ticketDetail.id
+          ? {
+            ...ticket,
+            statut: ticketDetail.statut,
+            date_dernier_action: ticketDetail.date_dernier_action,
+            fermee: ticketDetail.fermee
+          }
+          : ticket
+      )));
       setVue('detail');
     }
     setChargementDetail(false);
@@ -141,6 +156,29 @@ function PageTechnicien({ username, ongletActif }: Props) {
     await chargerTickets();
   }
 
+  async function handleFermerTicket() {
+    if (!ticketSelectionne) return;
+
+    const confirmation = window.confirm('Confirmer la fermeture de ce ticket ?');
+    if (!confirmation) return;
+
+    setMessageFermeture('');
+
+    const res = await api.post<fermerTicketTechnicienBody, baseResponse>(
+      '/technicien/ticket/fermer',
+      { ticketId: ticketSelectionne.id }
+    );
+
+    if (!res.donnees?.success) {
+      setMessageFermeture(res.donnees?.reason ?? res.erreur ?? 'Erreur');
+      return;
+    }
+
+    setMessageFermeture('Ticket fermé.');
+    await ouvrirTicket(ticketSelectionne.id, { preserveMessages: true });
+    await chargerTickets();
+  }
+
   function renderListe() {
     return (
       <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -159,7 +197,14 @@ function PageTechnicien({ username, ongletActif }: Props) {
                     <span className="text-sm font-medium text-gray-800">
                       #{ticket.id} - {ticket.sujet}
                     </span>
-                    <BadgeStatut statut={ticket.statut} />
+                    <div className="flex items-center gap-2">
+                      <BadgeStatut statut={ticket.statut} />
+                      {ticket.fermee && (
+                        <span className="px-2 py-1 rounded-full text-[11px] font-medium bg-gray-800 text-white">
+                          Fermé
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-xs text-gray-400 mt-1">
                     {ticket.username_auteur} - {formatDateHeure(ticket.date_creation)}
@@ -190,11 +235,13 @@ function PageTechnicien({ username, ongletActif }: Props) {
         <h2 className="text-xl font-bold text-gray-800 flex-1">Espace technicien</h2>
         {vue === 'detail' && (
           <button
-            onClick={() => {
+            onClick={async () => {
+              await chargerTickets();
               setVue('liste');
               setTicketSelectionne(null);
               setMessageCommentaire('');
               setMessageStatut('');
+              setMessageFermeture('');
             }}
             className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
           >
@@ -222,53 +269,20 @@ function PageTechnicien({ username, ongletActif }: Props) {
           ticket={ticketSelectionne}
           titreCommentaires={`Commentaires (${ticketSelectionne.commentaires.length})`}
           actions={(
-            <>
-              <form onSubmit={handleChangerStatut} className="flex gap-2 items-center">
-                <select
-                  value={statutChoisi}
-                  onChange={e => setStatutChoisi(e.target.value as StatutTicket)}
-                  className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {STATUTS_TICKET.map(statut => (
-                    <option key={statut} value={statut}>{LIBELLE_STATUT[statut]}</option>
-                  ))}
-                </select>
-                <button
-                  type="submit"
-                  className="bg-gray-700 hover:bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  Mettre à jour
-                </button>
-              </form>
-              {messageStatut && (
-                <p className={`text-xs ${messageStatut.includes('jour') ? 'text-green-700' : 'text-red-600'}`}>
-                  {messageStatut}
-                </p>
-              )}
-
-              <form onSubmit={handleCommenter} className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Ajouter un commentaire</label>
-                <textarea
-                  value={contenuCommentaire}
-                  onChange={e => setContenuCommentaire(e.target.value)}
-                  placeholder="Votre réponse..."
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  rows={3}
-                  required
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-                >
-                  Répondre
-                </button>
-                {messageCommentaire && (
-                  <p className={`text-xs ${messageCommentaire.includes('ajouté') ? 'text-green-700' : 'text-red-600'}`}>
-                    {messageCommentaire}
-                  </p>
-                )}
-              </form>
-            </>
+            <ActionsTicket
+              mode="technicien"
+              fermee={ticketSelectionne.fermee}
+              commentaire={contenuCommentaire}
+              onCommentaireChange={setContenuCommentaire}
+              onCommenter={handleCommenter}
+              onFermerTicket={handleFermerTicket}
+              messageCommentaire={messageCommentaire}
+              messageFermeture={messageFermeture}
+              statutChoisi={statutChoisi}
+              onStatutChange={setStatutChoisi}
+              onChangerStatut={handleChangerStatut}
+              messageStatut={messageStatut}
+            />
           )}
         />
       )}

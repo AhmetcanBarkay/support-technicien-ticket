@@ -3,7 +3,8 @@ import {
     listerMesTicketsController,
     detailMonTicketController,
     creerTicketController,
-    commenterMonTicketController
+    commenterMonTicketController,
+    fermerMonTicketController
 } from "../controllers/utilisateurController.js";
 
 const router = express.Router();
@@ -19,5 +20,8 @@ router.post("/ticket/creer", creerTicketController);
 
 // Commenter sur mon ticket
 router.post("/ticket/commenter", commenterMonTicketController);
+
+// Fermer mon ticket
+router.post("/ticket/fermer", fermerMonTicketController);
 
 export default router;

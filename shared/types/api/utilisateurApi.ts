@@ -9,6 +9,8 @@ export interface ticketResumeUtilisateur {
     sujet: string;
     statut: StatutTicket;
     date_creation: string;
+    date_dernier_action: string;
+    fermee: boolean;
 }
 
 export interface ticketDetailUtilisateur extends ticketResumeUtilisateur {
@@ -26,6 +28,10 @@ export interface creerTicketBody {
 export interface ajouterCommentaireUtilisateurBody {
     ticketId: number;
     contenu: string;
+}
+
+export interface fermerTicketUtilisateurBody {
+    ticketId: number;
 }
 
 // --- Réponses ---

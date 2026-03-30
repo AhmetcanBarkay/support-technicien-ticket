@@ -1,4 +1,4 @@
-import { query } from "../db/postgres.js";
+import { pool, query } from "../db/postgres.js";
 import type { StatutTicket } from "@shared/types/statutsTicket.js";
 import type { commentaireItem, ticketResumeTechnicien, ticketDetailTechnicien } from "@shared/types/api/technicienApi.js";
 
@@ -10,6 +10,8 @@ interface DbTicketRow {
     contenu: string;
     statut: StatutTicket;
     date_creation: string;
+    date_dernier_action: string;
+    fermee: boolean;
     username_auteur: string;
 }
 
@@ -27,6 +29,8 @@ function versResumeTicket(row: DbTicketRow): ticketResumeTechnicien {
         sujet: row.sujet,
         statut: row.statut,
         date_creation: row.date_creation,
+        date_dernier_action: row.date_dernier_action,
+        fermee: row.fermee,
         username_auteur: row.username_auteur
     };
 }
@@ -50,6 +54,8 @@ export async function listerTousLesTickets(): Promise<ticketResumeTechnicien[]> 
             t.contenu,
             t.statut,
             t.date_creation,
+            t.date_dernier_action,
+            t.fermee,
             p.identifiant AS username_auteur
         FROM ticket t
         JOIN personne p ON p.id_personne = t.id_utilisateur
@@ -69,6 +75,8 @@ export async function getDetailTicketTechnicien(
             t.contenu,
             t.statut,
             t.date_creation,
+            t.date_dernier_action,
+            t.fermee,
             p.identifiant AS username_auteur
         FROM ticket t
         JOIN personne p ON p.id_personne = t.id_utilisateur
@@ -98,6 +106,8 @@ export async function getDetailTicketTechnicien(
         contenu: ticket.contenu,
         statut: ticket.statut,
         date_creation: ticket.date_creation,
+        date_dernier_action: ticket.date_dernier_action,
+        fermee: ticket.fermee,
         username_auteur: ticket.username_auteur,
         commentaires: commentairesResult.rows.map(versCommentaire)
     };
@@ -107,12 +117,22 @@ export async function getDetailTicketTechnicien(
 export async function changerStatutTicket(
     idTicket: number,
     statut: StatutTicket
-): Promise<"success" | "introuvable"> {
+): Promise<"success" | "introuvable" | "ticket_ferme"> {
     const result = await query<{ id_ticket: number }>(
-        "UPDATE ticket SET statut = $1 WHERE id_ticket = $2 RETURNING id_ticket",
+        "UPDATE ticket SET statut = $1, date_dernier_action = NOW() WHERE id_ticket = $2 AND fermee = FALSE RETURNING id_ticket",
         [statut, idTicket]
     );
-    return result.rows.length === 0 ? "introuvable" : "success";
+
+    if (result.rows.length > 0) return "success";
+
+    const etat = await query<{ fermee: boolean }>(
+        "SELECT fermee FROM ticket WHERE id_ticket = $1 LIMIT 1",
+        [idTicket]
+    );
+
+    if (etat.rows.length === 0) return "introuvable";
+    if (etat.rows[0].fermee) return "ticket_ferme";
+    return "introuvable";
 }
 
 // Ajouter un commentaire (technicien ou utilisateur)
@@ -120,17 +140,68 @@ export async function ajouterCommentaire(
     idTicket: number,
     idPersonne: number,
     contenu: string
-): Promise<"success" | "ticket_introuvable"> {
+): Promise<"success" | "ticket_introuvable" | "ticket_ferme"> {
     // Vérifier que le ticket existe
-    const ticketExiste = await query<{ id_ticket: number }>(
-        "SELECT id_ticket FROM ticket WHERE id_ticket = $1 LIMIT 1",
+    const ticketExiste = await query<{ id_ticket: number; fermee: boolean }>(
+        "SELECT id_ticket, fermee FROM ticket WHERE id_ticket = $1 LIMIT 1",
         [idTicket]
     );
     if (ticketExiste.rows.length === 0) return "ticket_introuvable";
+    if (ticketExiste.rows[0].fermee) return "ticket_ferme";
 
     await query(
         "INSERT INTO commentaire (contenu, id_ticket, id_personne) VALUES ($1, $2, $3)",
         [contenu.trim(), idTicket, idPersonne]
     );
+
+    await query(
+        "UPDATE ticket SET date_dernier_action = NOW() WHERE id_ticket = $1",
+        [idTicket]
+    );
+
     return "success";
+}
+
+export async function fermerTicket(
+    idTicket: number,
+    idPersonne: number
+): Promise<"success" | "ticket_introuvable" | "deja_ferme"> {
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const ticket = await client.query<{ fermee: boolean }>(
+            "SELECT fermee FROM ticket WHERE id_ticket = $1 LIMIT 1 FOR UPDATE",
+            [idTicket]
+        );
+
+        if (ticket.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return "ticket_introuvable";
+        }
+
+        if (ticket.rows[0].fermee) {
+            await client.query("ROLLBACK");
+            return "deja_ferme";
+        }
+
+        await client.query(
+            "UPDATE ticket SET fermee = TRUE, date_dernier_action = NOW() WHERE id_ticket = $1",
+            [idTicket]
+        );
+
+        await client.query(
+            "INSERT INTO commentaire (contenu, id_ticket, id_personne) VALUES ($1, $2, $3)",
+            ["J'ai fermé ce ticket", idTicket, idPersonne]
+        );
+
+        await client.query("COMMIT");
+        return "success";
+    } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+    } finally {
+        client.release();
+    }
 }

@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import type {
     changerStatutBody,
     ajouterCommentaireTechnicienBody,
+    fermerTicketTechnicienBody,
     ticketsListeTechnicienResponse,
     ticketDetailTechnicienResponse
 } from "@shared/types/api/technicienApi.js";
@@ -12,7 +13,8 @@ import {
     listerTousLesTickets,
     getDetailTicketTechnicien,
     changerStatutTicket,
-    ajouterCommentaire
+    ajouterCommentaire,
+    fermerTicket
 } from "../services/technicienService.js";
 
 export async function listerTicketsController(
@@ -72,6 +74,9 @@ export async function changerStatutController(
         if (resultat === "introuvable") {
             return res.status(404).json({ success: false, reason: "Ticket introuvable" });
         }
+        if (resultat === "ticket_ferme") {
+            return res.status(400).json({ success: false, reason: "Ticket fermé, statut non modifiable" });
+        }
 
         return res.status(200).json({ success: true });
     } catch (err) {
@@ -103,8 +108,41 @@ export async function commenterTicketTechnicienController(
         if (resultat === "ticket_introuvable") {
             return res.status(404).json({ success: false, reason: "Ticket introuvable" });
         }
+        if (resultat === "ticket_ferme") {
+            return res.status(400).json({ success: false, reason: "Ticket fermé, vous ne pouvez plus commenter" });
+        }
 
         return res.status(201).json({ success: true });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, reason: API_MESSAGES.INTERNAL_ERROR });
+    }
+}
+
+export async function fermerTicketTechnicienController(
+    req: Request<{}, baseResponse, fermerTicketTechnicienBody>,
+    res: Response<baseResponse>
+) {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ success: false, reason: API_MESSAGES.UNAUTHENTICATED });
+        }
+
+        const { ticketId } = req.body;
+
+        if (typeof ticketId !== "number") {
+            return res.status(400).json({ success: false, reason: "Identifiant ticket invalide" });
+        }
+
+        const resultat = await fermerTicket(ticketId, req.user.id);
+        if (resultat === "ticket_introuvable") {
+            return res.status(404).json({ success: false, reason: "Ticket introuvable" });
+        }
+        if (resultat === "deja_ferme") {
+            return res.status(400).json({ success: false, reason: "Ticket déjà fermé" });
+        }
+
+        return res.status(200).json({ success: true });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false, reason: API_MESSAGES.INTERNAL_ERROR });

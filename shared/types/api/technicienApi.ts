@@ -8,6 +8,8 @@ export interface ticketResumeTechnicien {
     sujet: string;
     statut: StatutTicket;
     date_creation: string;
+    date_dernier_action: string;
+    fermee: boolean;
     username_auteur: string;
 }
 
@@ -34,6 +36,10 @@ export interface changerStatutBody {
 export interface ajouterCommentaireTechnicienBody {
     ticketId: number;
     contenu: string;
+}
+
+export interface fermerTicketTechnicienBody {
+    ticketId: number;
 }
 
 // --- Réponses ---

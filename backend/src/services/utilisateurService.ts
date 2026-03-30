@@ -2,7 +2,7 @@ import { query } from "../db/postgres.js";
 import type { StatutTicket } from "@shared/types/statutsTicket.js";
 import type { ticketResumeUtilisateur, ticketDetailUtilisateur } from "@shared/types/api/utilisateurApi.js";
 import type { commentaireItem } from "@shared/types/api/technicienApi.js";
-import { ajouterCommentaire } from "./technicienService.js";
+import { ajouterCommentaire, fermerTicket } from "./technicienService.js";
 
 // --- Types BDD ---
 
@@ -12,6 +12,8 @@ interface DbTicketUtilisateurRow {
     contenu: string;
     statut: StatutTicket;
     date_creation: string;
+    date_dernier_action: string;
+    fermee: boolean;
 }
 
 interface DbCommentaireRow {
@@ -28,7 +30,7 @@ export async function listerTicketsUtilisateur(
     idUtilisateur: number
 ): Promise<ticketResumeUtilisateur[]> {
     const result = await query<DbTicketUtilisateurRow>(`
-        SELECT id_ticket, sujet, contenu, statut, date_creation
+        SELECT id_ticket, sujet, contenu, statut, date_creation, date_dernier_action, fermee
         FROM ticket
         WHERE id_utilisateur = $1
         ORDER BY date_creation DESC
@@ -38,7 +40,9 @@ export async function listerTicketsUtilisateur(
         id: row.id_ticket,
         sujet: row.sujet,
         statut: row.statut,
-        date_creation: row.date_creation
+        date_creation: row.date_creation,
+        date_dernier_action: row.date_dernier_action,
+        fermee: row.fermee
     }));
 }
 
@@ -49,7 +53,7 @@ export async function getDetailTicketUtilisateur(
     idUtilisateur: number
 ): Promise<ticketDetailUtilisateur | null | "acces_refuse"> {
     const ticketResult = await query<DbTicketUtilisateurRow>(`
-        SELECT id_ticket, sujet, contenu, statut, date_creation
+        SELECT id_ticket, sujet, contenu, statut, date_creation, date_dernier_action, fermee
         FROM ticket
         WHERE id_ticket = $1
         LIMIT 1
@@ -96,6 +100,8 @@ export async function getDetailTicketUtilisateur(
         contenu: ticket.contenu,
         statut: ticket.statut,
         date_creation: ticket.date_creation,
+        date_dernier_action: ticket.date_dernier_action,
+        fermee: ticket.fermee,
         commentaires
     };
 }
@@ -120,7 +126,7 @@ export async function commenterTicketUtilisateur(
     idTicket: number,
     idUtilisateur: number,
     contenu: string
-): Promise<"success" | "ticket_introuvable" | "acces_refuse"> {
+): Promise<"success" | "ticket_introuvable" | "acces_refuse" | "ticket_ferme"> {
     // Vérifier appartenance
     const appartient = await query<{ id_utilisateur: number }>(
         "SELECT id_utilisateur FROM ticket WHERE id_ticket = $1 LIMIT 1",
@@ -131,4 +137,19 @@ export async function commenterTicketUtilisateur(
     if (appartient.rows[0].id_utilisateur !== idUtilisateur) return "acces_refuse";
 
     return ajouterCommentaire(idTicket, idUtilisateur, contenu);
+}
+
+export async function fermerTicketUtilisateur(
+    idTicket: number,
+    idUtilisateur: number
+): Promise<"success" | "ticket_introuvable" | "acces_refuse" | "deja_ferme"> {
+    const appartient = await query<{ id_utilisateur: number }>(
+        "SELECT id_utilisateur FROM ticket WHERE id_ticket = $1 LIMIT 1",
+        [idTicket]
+    );
+
+    if (appartient.rows.length === 0) return "ticket_introuvable";
+    if (appartient.rows[0].id_utilisateur !== idUtilisateur) return "acces_refuse";
+
+    return fermerTicket(idTicket, idUtilisateur);
 }
