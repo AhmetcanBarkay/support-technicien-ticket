@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import type { Role } from '@shared/types/roles';
 import PageAdmin from '../pages/PageAdmin';
 import PageTechnicien from '../pages/PageTechnicien';
 import PageUtilisateur from '../pages/PageUtilisateur';
+import FormulaireChangementMotDePasse from './FormulaireChangementMotDePasse';
 
 interface Props {
   role: Role | null;
@@ -10,6 +12,9 @@ interface Props {
 }
 
 function EspaceAuthentifie({ role, username, onDeconnexion }: Props) {
+  const [afficherChangementMotDePasse, setAfficherChangementMotDePasse] = useState(false);
+  const peutChangerMotDePasse = role === 'utilisateur' || role === 'technicien';
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Barre du haut */}
@@ -20,16 +25,29 @@ function EspaceAuthentifie({ role, username, onDeconnexion }: Props) {
             <span className="ml-2 text-xs text-gray-400">({role})</span>
           )}
         </span>
-        <button
-          onClick={onDeconnexion}
-          className="text-sm text-gray-500 hover:text-red-600 transition-colors"
-        >
-          Déconnexion
-        </button>
+        <div className="flex items-center gap-3">
+          {peutChangerMotDePasse && (
+            <button
+              onClick={() => setAfficherChangementMotDePasse(!afficherChangementMotDePasse)}
+              className="text-sm text-gray-500 hover:text-blue-600 transition-colors"
+            >
+              {afficherChangementMotDePasse ? 'Fermer le formulaire' : 'Changer mon mot de passe'}
+            </button>
+          )}
+          <button
+            onClick={onDeconnexion}
+            className="text-sm text-gray-500 hover:text-red-600 transition-colors"
+          >
+            Déconnexion
+          </button>
+        </div>
       </header>
 
       {/* Contenu selon le rôle */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {peutChangerMotDePasse && afficherChangementMotDePasse && (
+          <FormulaireChangementMotDePasse onSucces={() => setAfficherChangementMotDePasse(false)} />
+        )}
         {role === 'admin' && <PageAdmin />}
         {role === 'technicien' && <PageTechnicien />}
         {role === 'utilisateur' && <PageUtilisateur />}
