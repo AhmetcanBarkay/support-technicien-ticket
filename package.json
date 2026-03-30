@@ -10,6 +10,7 @@
         "build:frontend": "npm --prefix frontend run build",
         "build": "npm run build:backend && npm run build:frontend",
         "test": "npm --prefix backend run test",
+        "seed-test-data": "npm --prefix backend run seed-test-data",
         "start": "npm --prefix backend run start"
     },
     "dependencies": {
