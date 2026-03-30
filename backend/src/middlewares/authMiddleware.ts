@@ -41,5 +41,5 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 }
 
 export const requireAdmin = requireRole("admin");
-export const requireTechnicien = requireRole("technicien", "admin");
+export const requireTechnicien = requireRole("technicien");
 export const requireUtilisateur = requireRole("utilisateur");
