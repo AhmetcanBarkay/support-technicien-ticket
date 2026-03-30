@@ -34,7 +34,7 @@ function IndicateurReglesMotDePasse({
                 {typeof confirmation === 'string' && (
                     <li className={`text-xs ${confirmationValide ? 'text-green-700' : 'text-gray-500'}`}>
                         <span className={`inline-block min-w-8 text-center rounded px-1 mr-2 font-medium ${(confirmationValide && confirmationRenseignee) ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
-                            {(confirmationValide && confirmationRenseignee) ? '✓ bon' : '✕'}
+                            {(confirmationValide && confirmationRenseignee) ? '✓' : '✕'}
                         </span>
                         confirmation identique
                     </li>
