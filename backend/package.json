@@ -1,7 +1,7 @@
 {
-    "name": "gestion-ticket-support-backend",
+    "name": "support-technicien-ticket-backend",
     "version": "1.0.0",
-    "description": "Backend pour gestion-ticket-support",
+    "description": "Backend pour support technicien ticket",
     "main": "dist/backend/src/index.js",
     "scripts": {
         "dev": "tsx watch src/index.ts",

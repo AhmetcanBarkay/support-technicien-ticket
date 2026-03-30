@@ -1,8 +1,8 @@
 {
-    "name": "gestion-ticket-support",
+    "name": "support-technicien-ticket",
     "version": "1.0.0",
     "private": true,
-    "description": "Application fullstack de gestion de tickets de support",
+    "description": "Application fullstack support technicien ticket",
     "scripts": {
         "dev:backend": "npm --prefix backend run dev",
         "dev:frontend": "npm --prefix frontend run dev",

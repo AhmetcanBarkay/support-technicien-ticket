@@ -3,7 +3,7 @@ import { pool, query } from "./postgres.js";
 import { generateUniqueToken } from "../services/personneService.js";
 import { getBcryptSaltRounds } from "../constants/securite.js";
 
-// Création du schéma complet adapté au MCD gestion de tickets
+// Création du schéma complet adapté au MCD support technicien ticket
 
 async function creerSchema(): Promise<void> {
     // Table personne-base commune des comptes
