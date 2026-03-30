@@ -11,7 +11,7 @@ import type { baseResponse } from '@shared/types/api/baseApi';
 import { LIBELLE_STATUT, STATUTS_TICKET, type StatutTicket } from '@shared/types/statutsTicket';
 import { api } from '../services/apiService';
 import BadgeStatut from '../components/BadgeStatut';
-import { formatDateHeure } from '../utils/formatDateHeure';
+import ListeCommentairesTicket from '../components/ListeCommentairesTicket';
 
 function PageTechnicien() {
   const [tickets, setTickets] = useState<ticketResumeTechnicien[]>([]);
@@ -185,21 +185,7 @@ function PageTechnicien() {
                 <h4 className="text-sm font-medium text-gray-700 mb-2">
                   Commentaires ({ticketSelectionne.commentaires.length})
                 </h4>
-                {ticketSelectionne.commentaires.length === 0 ? (
-                  <p className="text-xs text-gray-400">Aucun commentaire.</p>
-                ) : (
-                  <ul className="space-y-2 max-h-48 overflow-y-auto">
-                    {ticketSelectionne.commentaires.map(c => (
-                      <li key={c.id} className="bg-gray-50 rounded-lg p-3 text-sm">
-                        <div className="flex justify-between items-center text-xs text-gray-400 mb-1">
-                          <span className="font-medium text-gray-600">{c.username_auteur}</span>
-                          <span>{formatDateHeure(c.date_envoi)}</span>
-                        </div>
-                        <p className="text-gray-700">{c.contenu}</p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <ListeCommentairesTicket commentaires={ticketSelectionne.commentaires} />
               </div>
 
               {/* Ajouter commentaire */}
