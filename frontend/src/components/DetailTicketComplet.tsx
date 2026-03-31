@@ -39,7 +39,7 @@ function DetailTicketComplet({
         <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
             <div>
                 <div className="flex justify-between items-start gap-2 mb-1">
-                    <h3 className="font-semibold text-gray-800">#{ticket.id} - {ticket.sujet}</h3>
+                    <h3 className="font-semibold text-gray-800">{ticket.sujet}</h3>
                     <div className="flex items-center gap-2">
                         <BadgeStatut statut={ticket.statut} />
                         {ticket.fermee && (

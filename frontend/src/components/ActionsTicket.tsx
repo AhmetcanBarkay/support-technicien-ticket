@@ -35,7 +35,7 @@ function ActionsTicket({
     return (
         <div className="space-y-3">
             {fermee ? (
-                <p className="text-sm text-gray-500">Ticket fermé, actions désactivées.</p>
+                <p className="text-sm text-gray-500">Ticket fermé.</p>
             ) : (
                 <>
                     {!estTechnicien && (<button

@@ -168,7 +168,7 @@ function PageUtilisateur() {
                   >
                     <div className="flex justify-between items-start gap-2">
                       <span className="text-sm font-medium text-gray-800">
-                        #{t.id}-{t.sujet}
+                        {t.sujet}
                       </span>
                       <div className="flex items-center gap-2">
                         <BadgeStatut statut={t.statut} />
