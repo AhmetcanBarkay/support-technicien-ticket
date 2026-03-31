@@ -1,25 +1,17 @@
 import assert from "node:assert/strict";
-import { after, before, test } from "node:test";
-import dotenv from "dotenv";
-import { genererNomUnique, nettoyerPersonneParNom } from "./helpers/testHelpers.js";
+import { test } from "node:test";
+import {
+    configurerTestsAvecServices,
+    genererNomUnique,
+    nettoyerPersonneParNom
+} from "./helpers/testHelpers.js";
 
-dotenv.config({ path: "../.env" });
-process.env.ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin123!";
-
-let db: typeof import("../db/initDatabase.js");
-let personneService: typeof import("../services/personneService.js");
-
-before(async () => {
-    db = await import("../db/initDatabase.js");
-    personneService = await import("../services/personneService.js");
-    await db.initDatabase();
-});
-
-after(async () => {
-    await db.closeDatabase();
-});
+const getServices = configurerTestsAvecServices(async () => ({
+    personneService: await import("../services/personneService.js")
+}));
 
 test("Auth : inscrit un utilisateur puis permet la connexion", async () => {
+    const { personneService } = getServices();
     const identifiant = genererNomUnique("auth_register_login");
     const motDePasse = "Testclient123!";
 
@@ -38,6 +30,7 @@ test("Auth : inscrit un utilisateur puis permet la connexion", async () => {
 });
 
 test("Auth : refuse la connexion avec un mot de passe invalide", async () => {
+    const { personneService } = getServices();
     const identifiant = genererNomUnique("auth_bad_password");
 
     try {
@@ -52,6 +45,7 @@ test("Auth : refuse la connexion avec un mot de passe invalide", async () => {
 });
 
 test("Auth : refuse le changement si le mot de passe actuel est incorrect", async () => {
+    const { personneService } = getServices();
     const identifiant = genererNomUnique("auth_change_wrong_current");
 
     try {
@@ -72,6 +66,7 @@ test("Auth : refuse le changement si le mot de passe actuel est incorrect", asyn
 });
 
 test("Auth : change le mot de passe et renouvelle le token", async () => {
+    const { personneService } = getServices();
     const identifiant = genererNomUnique("auth_change_success");
     const ancienMotDePasse = "Testclient123!";
     const nouveauMotDePasse = "NouveauPass123!";
@@ -104,6 +99,7 @@ test("Auth : change le mot de passe et renouvelle le token", async () => {
 });
 
 test("Auth : refuse de reutiliser le meme mot de passe", async () => {
+    const { personneService } = getServices();
     const identifiant = genererNomUnique("auth_change_same_password");
     const motDePasse = "Testclient123!";
 
