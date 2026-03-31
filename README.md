@@ -138,11 +138,13 @@ npm run test
 
 Ce script lance tous les tests du dossier backend/src/tests.
 Il execute automatiquement tous les fichiers *.test.ts dans backend/src/tests.
-Il couvre les fonctionnalites des roles, de l'authentification et des tickets avec des fichiers separes:
+Il couvre les fonctionnalites de l'authentification, des permission roles et des triggers avec des fichiers séparés:
 
 - auth
-- roles
-- ticket
+- admin
+- technicien
+- utilisateur
+- trigger
 
 Initialisation rapide des donnees de test:
 
