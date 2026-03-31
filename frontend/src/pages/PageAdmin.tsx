@@ -94,19 +94,20 @@ function PageAdmin() {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-bold text-gray-800">Administration-Techniciens</h2>
+      <h2 className="text-xl font-bold text-gray-800">Administration des Techniciens</h2>
 
       {/* Liste des techniciens */}
       <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="font-semibold text-gray-700 mb-4">
           Techniciens ({techniciens.length})
         </h3>
+
         {chargement ? (
           <p className="text-gray-400 text-sm">Chargement...</p>
         ) : techniciens.length === 0 ? (
           <p className="text-gray-400 text-sm">Aucun technicien enregistré.</p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-gray-300 divide-dashed">
             {techniciens.map(t => (
               <li key={t.id} className="py-2 flex justify-between items-center text-sm">
                 <span className="font-medium text-gray-700">{t.username}</span>
@@ -132,19 +133,19 @@ function PageAdmin() {
       {/* Créer un technicien */}
       <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="font-semibold text-gray-700 mb-4">Ajouter un technicien</h3>
-        <form onSubmit={handleCreer} className="space-y-3">
+        <form onSubmit={handleCreer} className="flex flex-row gap-2">
           <input
             type="text"
             value={nouvelIdentifiant}
             onChange={e => setNouvelIdentifiant(e.target.value)}
             placeholder="Identifiant du technicien"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             maxLength={30}
             required
           />
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
           >
             Créer le compte
           </button>
