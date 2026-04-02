@@ -10,70 +10,70 @@ Application fullstack de support technicien ticket (authentification, gestion de
 
 - Frontend: React + TypeScript + Vite
 - Backend: Node.js + Express + TypeScript
-- Base de donnees: PostgreSQL
+- Base de données: PostgreSQL
 
-## Liste des fonctionnalites (Diagramme des Use Case)
+## Liste des fonctionnalités (Diagramme des Use Case)
 
 Le diagramme de cas d'utilisation est disponible ci-dessous:
 
 ![Diagramme use case](illustrations/use_cases.png)
 
-Fonctionnalites principales:
+Fonctionnalités principales:
 
-- Utilisateur: creer un compte, se connecter, creer un ticket, consulter ses tickets, commenter, fermer un ticket, changer son mot de passe.
+- Utilisateur: créer un compte, se connecter, créer un ticket, consulter ses tickets, commenter, fermer un ticket, changer son mot de passe.
 - Technicien: consulter tous les tickets, changer le statut, commenter, fermer un ticket, changer son mot de passe.
-- Administrateur: gerer les comptes techniciens.
+- Administrateur: gérer les comptes techniciens.
 
-## Donnees manipulees (Modele Entite-Association)
+## Données manipulées (Modèle Entité-Association)
 
 Le MCD actuel est le suivant:
 
 ![MCD de l'application](illustrations/mcd.png)
 
-Entites manipulees:
+Entités manipulées:
 
-- personne: identifiant, mot de passe hashe, token, role, date de creation.
-- ticket: sujet, contenu, statut, date de creation, date dernier action, etat de fermeture.
-- commentaire: contenu, date envoi, auteur, ticket associe.
+- personne: identifiant, mot de passe hashé, token, rôle, date de création.
+- ticket: sujet, contenu, statut, date de création, date dernier action, état de fermeture.
+- commentaire: contenu, date envoi, auteur, ticket associé.
 
 Relations importantes:
 
-- Une personne utilisateur peut creer plusieurs tickets.
-- Un ticket appartient a un seul utilisateur createur.
+- Une personne utilisateur peut créer plusieurs tickets.
+- Un ticket appartient à un seul utilisateur créateur.
 - Un ticket peut contenir plusieurs commentaires.
-- Un commentaire est lie a un ticket et a une personne auteur.
+- Un commentaire est lié à un ticket et à une personne auteur.
 
-## Contraintes metier ticket
+## Contraintes métier ticket
 
 - Un utilisateur ne peut voir et commenter que ses propres tickets.
 - Un technicien peut consulter tous les tickets.
-- Un ticket ferme ne peut plus etre commente ni changer de statut.
-- Un ticket peut etre ferme par son utilisateur proprietaire ou par un technicien.
-- Les tickets fermes sont supprimes automatiquement apres 7 jours.
+- Un ticket fermé ne peut plus être commenté ni changer de statut.
+- Un ticket peut être fermé par son utilisateur propriétaire ou par un technicien.
+- Les tickets fermés sont supprimés automatiquement après 7 jours.
 
-Deroulement general d'un traitement de ticket:
+Déroulement général d'un traitement de ticket:
 
-1. L'utilisateur cree un ticket.
-2. Le technicien consulte la liste et ouvre le detail.
+1. L'utilisateur crée un ticket.
+2. Le technicien consulte la liste et ouvre le détail.
 3. Le technicien change le statut et commente selon le besoin.
-4. Le ticket est ferme par utilisateur ou technicien quand le traitement est termine.
-5. Le backend bloque ensuite les nouvelles actions sur ce ticket ferme.
+4. Le ticket est fermé par utilisateur ou technicien quand le traitement est terminé.
+5. Le backend bloque ensuite les nouvelles actions sur ce ticket fermé.
 
 ## Installation et lancement
 
-Prerequis:
+Prérequis:
 
 - Node.js 20+
 - npm 10+
 - PostgreSQL
 
-1. Installer les dependances depuis la racine:
+1. Installer les dépendances depuis la racine:
 
 ```bash
 npm install
 ```
 
-2. Creer le fichier .env a la racine (a partir de .env.example):
+2. Créer le fichier .env à la racine (à partir de .env.example):
 
 ```env
 PORT=3000
@@ -85,10 +85,10 @@ BCRYPT_SALT_ROUNDS=10
 
 Notes:
 
-- BCRYPT_SALT_ROUNDS est optionnel (entier 4..31). Valeur par defaut: 10.
-- Au demarrage backend, le schema est initialise et le compte admin est garanti.
+- BCRYPT_SALT_ROUNDS est optionnel (entier 4..31). Valeur par défaut: 10.
+- Au démarrage backend, le schéma est initialisé et le compte admin est garanti.
 
-3. Demarrer l'application en developpement (2 terminaux recommandes):
+3. Démarrer l'application en développement (2 terminaux recommandés):
 
 Terminal 1 (backend API):
 
@@ -102,23 +102,23 @@ Terminal 2 (frontend Vite):
 npm run dev:frontend
 ```
 
-Les deux processus doivent tourner en meme temps en mode dev:
+Les deux processus doivent tourner en même temps en mode dev:
 
-- le backend expose l'API (port 3000 par defaut)
-- le frontend sert l'interface web (port 5173 par defaut)
+- le backend expose l'API (port 3000 par défaut)
+- le frontend sert l'interface web (port 5173 par défaut)
 
-Si un seul des deux est lance, l'application sera partiellement utilisable.
+Si un seul des deux est lancé, l'application sera partiellement utilisable.
 
 URLs locales:
 
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3000
 
-Limites de securite (mode test actuel):
+Limites de sécurité (mode test actuel):
 
 - POST /auth/connexion: 10 tentatives maximum par 15 minutes
-- POST /auth/inscription: 20 creations de comptes maximum par 15 minutes
-- Toutes les routes /utilisateur: 300 requetes maximum par IP sur 15 minutes
+- POST /auth/inscription: 20 créations de comptes maximum par 15 minutes
+- Toutes les routes /utilisateur: 300 requêtes maximum par IP sur 15 minutes
 
 ## Comment tester l'application
 
@@ -137,8 +137,8 @@ npm run test
 ```
 
 Ce script lance tous les tests du dossier backend/src/tests.
-Il execute automatiquement tous les fichiers *.test.ts dans backend/src/tests.
-Il couvre les fonctionnalites de l'authentification, des permission roles et des triggers avec des fichiers séparés:
+Il exécute automatiquement tous les fichiers *.test.ts dans backend/src/tests.
+Il couvre les fonctionnalités de l'authentification, des permissions rôles et des triggers avec des fichiers séparés:
 
 - auth
 - admin
@@ -146,49 +146,49 @@ Il couvre les fonctionnalites de l'authentification, des permission roles et des
 - utilisateur
 - trigger
 
-Initialisation rapide des donnees de test:
+Initialisation rapide des données de test:
 
 ```bash
 npm run seed-test-data
 ```
 
-Ce script ajoute des donnees de base via les services backend:
+Ce script ajoute des données de base via les services backend:
 
 - 1 compte technicien de test
 - 2 comptes utilisateurs de test
 - 4 tickets de test
 - commentaires de test sur plusieurs tickets
-- 1 ticket ferme de test
+- 1 ticket fermé de test
 
-Identifiants du compte technicien de test (affiches aussi en sortie de script):
+Identifiants du compte technicien de test (affichés aussi en sortie de script):
 
 - Username: technicien_test
 - Mot de passe: Testtech123!
 
-Identifiants des comptes utilisateurs de test (affiches aussi en sortie de script):
+Identifiants des comptes utilisateurs de test (affichés aussi en sortie de script):
 
 - Username: utilisateur_test_1
 - Username: utilisateur_test_2
 - Mot de passe (les 2 comptes): Testclient123!
 
-Tests fonctionnels manuels recommandes:
+Tests fonctionnels manuels recommandés:
 
-1. Se connecter avec le compte admin (defini par ADMIN_USERNAME / ADMIN_PASSWORD dans .env).
-2. Creer un compte technicien depuis l'espace admin.
-3. Creer un compte utilisateur puis se connecter.
-4. Creer un ticket depuis l'espace utilisateur.
+1. Se connecter avec le compte admin (défini par ADMIN_USERNAME / ADMIN_PASSWORD dans .env).
+2. Créer un compte technicien depuis l'espace admin.
+3. Créer un compte utilisateur puis se connecter.
+4. Créer un ticket depuis l'espace utilisateur.
 5. Se connecter en technicien et changer le statut du ticket.
-6. Echanger des commentaires entre utilisateur et technicien.
-7. Fermer un ticket puis verifier le blocage des nouvelles actions.
-8. Verifier le changement de mot de passe (utilisateur et technicien).
+6. Échanger des commentaires entre utilisateur et technicien.
+7. Fermer un ticket puis vérifier le blocage des nouvelles actions.
+8. Vérifier le changement de mot de passe (utilisateur et technicien).
 
 ## Scripts utiles
 
-- npm run dev:backend: demarre le backend en watch.
-- npm run dev:frontend: demarre le frontend Vite.
+- npm run dev:backend: démarre le backend en watch.
+- npm run dev:frontend: démarre le frontend Vite.
 - npm run build:backend: compile le backend.
 - npm run build:frontend: compile le frontend.
 - npm run build: build complet backend + frontend.
 - npm run test: lance tous les tests du dossier backend/src/tests.
-- npm run seed-test-data: ajoute des donnees de base de test (comptes, tickets, commentaires).
-- npm run start: lance le backend compile.
+- npm run seed-test-data: ajoute des données de base de test (comptes, tickets, commentaires).
+- npm run start: lance le backend compilé.
