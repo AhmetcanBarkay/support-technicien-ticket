@@ -12,7 +12,7 @@ interface TicketDetailCommun {
     statut: StatutTicket;
     date_creation: string;
     date_dernier_action: string;
-    fermee: boolean;
+    ferme: boolean;
     commentaires: commentaireItem[];
     username_auteur?: string;
 }
@@ -42,7 +42,7 @@ function DetailTicketComplet({
                     <h3 className="font-semibold text-gray-800">{ticket.sujet}</h3>
                     <div className="flex items-center gap-2">
                         <BadgeStatut statut={ticket.statut} />
-                        {ticket.fermee && (
+                        {ticket.ferme && (
                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-800 text-white">
                                 Fermé
                             </span>

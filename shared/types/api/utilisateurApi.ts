@@ -10,7 +10,7 @@ export interface ticketResumeUtilisateur {
     statut: StatutTicket;
     date_creation: string;
     date_dernier_action: string;
-    fermee: boolean;
+    ferme: boolean;
 }
 
 export interface ticketDetailUtilisateur extends ticketResumeUtilisateur {

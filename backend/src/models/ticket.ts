@@ -8,7 +8,7 @@ interface Ticket {
     statut: StatutTicket;
     date_creation: Date;
     date_dernier_action: Date;
-    fermee: boolean;
+    ferme: boolean;
     id_utilisateur: number;
 }
 

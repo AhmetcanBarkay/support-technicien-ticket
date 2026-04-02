@@ -9,7 +9,7 @@ export interface ticketResumeTechnicien {
     statut: StatutTicket;
     date_creation: string;
     date_dernier_action: string;
-    fermee: boolean;
+    ferme: boolean;
     username_auteur: string;
 }
 

@@ -66,7 +66,7 @@ test("Technicien : fermeture ajoute un commentaire et bloque les actions", async
 
         const detail = await technicienService.getDetailTicketTechnicien(creationTicket.id);
         assert.ok(detail);
-        assert.equal(detail?.fermee, true);
+        assert.equal(detail?.ferme, true);
         const dernierCommentaire = detail!.commentaires[detail!.commentaires.length - 1];
         assert.equal(dernierCommentaire?.contenu, "J'ai fermé ce ticket");
 

@@ -172,7 +172,7 @@ function PageUtilisateur() {
                       </span>
                       <div className="flex items-center gap-2">
                         <BadgeStatut statut={t.statut} />
-                        {t.fermee && (
+                        {t.ferme && (
                           <span className="px-2 py-1 rounded-full text-[11px] font-medium bg-gray-800 text-white">
                             Fermé
                           </span>
@@ -243,7 +243,7 @@ function PageUtilisateur() {
           actions={(
             <ActionsTicket
               mode="utilisateur"
-              fermee={ticketOuvert.fermee}
+              ferme={ticketOuvert.ferme}
               commentaire={commentaire}
               onCommentaireChange={setCommentaire}
               onCommenter={handleCommenter}

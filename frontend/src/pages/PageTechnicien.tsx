@@ -44,7 +44,7 @@ function PageTechnicien({ username, ongletActif }: Props) {
 
   const idsTicketsPrisEnChargeSet = useMemo(() => new Set(idsTicketsPrisEnCharge), [idsTicketsPrisEnCharge]);
   const ticketsPrisEnCharge = tickets.filter(ticket => idsTicketsPrisEnChargeSet.has(ticket.id));
-  const ticketsATraiter = tickets.filter(ticket => !idsTicketsPrisEnChargeSet.has(ticket.id) && !ticket.fermee);
+  const ticketsATraiter = tickets.filter(ticket => !idsTicketsPrisEnChargeSet.has(ticket.id) && !ticket.ferme);
   const ticketsAffiches = ongletActif === 'tickets_en_cours' ? ticketsPrisEnCharge : ticketsATraiter;
   const titreListe = ongletActif === 'tickets_en_cours'
     ? 'Tickets sur lesquels je travaille'
@@ -106,7 +106,7 @@ function PageTechnicien({ username, ongletActif }: Props) {
             ...ticket,
             statut: ticketDetail.statut,
             date_dernier_action: ticketDetail.date_dernier_action,
-            fermee: ticketDetail.fermee
+            ferme: ticketDetail.ferme
           }
           : ticket
       )));
@@ -199,7 +199,7 @@ function PageTechnicien({ username, ongletActif }: Props) {
                     </span>
                     <div className="flex items-center gap-2">
                       <BadgeStatut statut={ticket.statut} />
-                      {ticket.fermee && (
+                      {ticket.ferme && (
                         <span className="px-2 py-1 rounded-full text-[11px] font-medium bg-gray-800 text-white">
                           Fermé
                         </span>
@@ -271,7 +271,7 @@ function PageTechnicien({ username, ongletActif }: Props) {
           actions={(
             <ActionsTicket
               mode="technicien"
-              fermee={ticketSelectionne.fermee}
+              ferme={ticketSelectionne.ferme}
               commentaire={contenuCommentaire}
               onCommentaireChange={setContenuCommentaire}
               onCommenter={handleCommenter}

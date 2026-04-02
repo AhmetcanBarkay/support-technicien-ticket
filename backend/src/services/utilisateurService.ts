@@ -13,7 +13,7 @@ interface DbTicketUtilisateurRow {
     statut: StatutTicket;
     date_creation: string;
     date_dernier_action: string;
-    fermee: boolean;
+    ferme: boolean;
 }
 
 interface DbCommentaireRow {
@@ -30,7 +30,7 @@ export async function listerTicketsUtilisateur(
     idUtilisateur: number
 ): Promise<ticketResumeUtilisateur[]> {
     const result = await query<DbTicketUtilisateurRow>(`
-        SELECT id_ticket, sujet, contenu, statut, date_creation, date_dernier_action, fermee
+        SELECT id_ticket, sujet, contenu, statut, date_creation, date_dernier_action, ferme AS ferme
         FROM ticket
         WHERE id_utilisateur = $1
         ORDER BY date_creation DESC
@@ -42,7 +42,7 @@ export async function listerTicketsUtilisateur(
         statut: row.statut,
         date_creation: row.date_creation,
         date_dernier_action: row.date_dernier_action,
-        fermee: row.fermee
+        ferme: row.ferme
     }));
 }
 
@@ -53,7 +53,7 @@ export async function getDetailTicketUtilisateur(
     idUtilisateur: number
 ): Promise<ticketDetailUtilisateur | null | "acces_refuse"> {
     const ticketResult = await query<DbTicketUtilisateurRow>(`
-        SELECT id_ticket, sujet, contenu, statut, date_creation, date_dernier_action, fermee
+        SELECT id_ticket, sujet, contenu, statut, date_creation, date_dernier_action, ferme AS ferme
         FROM ticket
         WHERE id_ticket = $1
         LIMIT 1
@@ -101,7 +101,7 @@ export async function getDetailTicketUtilisateur(
         statut: ticket.statut,
         date_creation: ticket.date_creation,
         date_dernier_action: ticket.date_dernier_action,
-        fermee: ticket.fermee,
+        ferme: ticket.ferme,
         commentaires
     };
 }
