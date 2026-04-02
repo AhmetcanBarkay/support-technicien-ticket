@@ -3,7 +3,7 @@ import { LIBELLE_STATUT, STATUTS_TICKET, type StatutTicket } from '@shared/types
 
 interface Props {
     mode: 'utilisateur' | 'technicien';
-    fermee: boolean;
+    ferme: boolean;
     commentaire: string;
     onCommentaireChange: (value: string) => void;
     onCommenter: (e: FormEvent) => void;
@@ -18,7 +18,7 @@ interface Props {
 
 function ActionsTicket({
     mode,
-    fermee,
+    ferme,
     commentaire,
     onCommentaireChange,
     onCommenter,
@@ -34,7 +34,7 @@ function ActionsTicket({
 
     return (
         <div className="space-y-3">
-            {fermee ? (
+            {ferme ? (
                 <p className="text-sm text-gray-500">Ticket fermé.</p>
             ) : (
                 <>

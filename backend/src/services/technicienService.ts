@@ -11,7 +11,7 @@ interface DbTicketRow {
     statut: StatutTicket;
     date_creation: string;
     date_dernier_action: string;
-    fermee: boolean;
+    ferme: boolean;
     username_auteur: string;
 }
 
@@ -30,7 +30,7 @@ function versResumeTicket(row: DbTicketRow): ticketResumeTechnicien {
         statut: row.statut,
         date_creation: row.date_creation,
         date_dernier_action: row.date_dernier_action,
-        fermee: row.fermee,
+        ferme: row.ferme,
         username_auteur: row.username_auteur
     };
 }
@@ -55,7 +55,7 @@ export async function listerTousLesTickets(): Promise<ticketResumeTechnicien[]> 
             t.statut,
             t.date_creation,
             t.date_dernier_action,
-            t.fermee,
+            t.ferme AS ferme,
             p.identifiant AS username_auteur
         FROM ticket t
         JOIN personne p ON p.id_personne = t.id_utilisateur
@@ -76,7 +76,7 @@ export async function getDetailTicketTechnicien(
             t.statut,
             t.date_creation,
             t.date_dernier_action,
-            t.fermee,
+            t.ferme AS ferme,
             p.identifiant AS username_auteur
         FROM ticket t
         JOIN personne p ON p.id_personne = t.id_utilisateur
@@ -107,7 +107,7 @@ export async function getDetailTicketTechnicien(
         statut: ticket.statut,
         date_creation: ticket.date_creation,
         date_dernier_action: ticket.date_dernier_action,
-        fermee: ticket.fermee,
+        ferme: ticket.ferme,
         username_auteur: ticket.username_auteur,
         commentaires: commentairesResult.rows.map(versCommentaire)
     };
@@ -119,19 +119,19 @@ export async function changerStatutTicket(
     statut: StatutTicket
 ): Promise<"success" | "introuvable" | "ticket_ferme"> {
     const result = await query<{ id_ticket: number }>(
-        "UPDATE ticket SET statut = $1, date_dernier_action = NOW() WHERE id_ticket = $2 AND fermee = FALSE RETURNING id_ticket",
+        "UPDATE ticket SET statut = $1, date_dernier_action = NOW() WHERE id_ticket = $2 AND ferme = FALSE RETURNING id_ticket",
         [statut, idTicket]
     );
 
     if (result.rows.length > 0) return "success";
 
-    const etat = await query<{ fermee: boolean }>(
-        "SELECT fermee FROM ticket WHERE id_ticket = $1 LIMIT 1",
+    const etat = await query<{ ferme: boolean }>(
+        "SELECT ferme AS ferme FROM ticket WHERE id_ticket = $1 LIMIT 1",
         [idTicket]
     );
 
     if (etat.rows.length === 0) return "introuvable";
-    if (etat.rows[0].fermee) return "ticket_ferme";
+    if (etat.rows[0].ferme) return "ticket_ferme";
     return "introuvable";
 }
 
@@ -142,12 +142,12 @@ export async function ajouterCommentaire(
     contenu: string
 ): Promise<"success" | "ticket_introuvable" | "ticket_ferme"> {
     // Vérifier que le ticket existe
-    const ticketExiste = await query<{ id_ticket: number; fermee: boolean }>(
-        "SELECT id_ticket, fermee FROM ticket WHERE id_ticket = $1 LIMIT 1",
+    const ticketExiste = await query<{ id_ticket: number; ferme: boolean }>(
+        "SELECT id_ticket, ferme AS ferme FROM ticket WHERE id_ticket = $1 LIMIT 1",
         [idTicket]
     );
     if (ticketExiste.rows.length === 0) return "ticket_introuvable";
-    if (ticketExiste.rows[0].fermee) return "ticket_ferme";
+    if (ticketExiste.rows[0].ferme) return "ticket_ferme";
 
     await query(
         "INSERT INTO commentaire (contenu, id_ticket, id_personne) VALUES ($1, $2, $3)",
@@ -171,8 +171,8 @@ export async function fermerTicket(
     try {
         await client.query("BEGIN");
 
-        const ticket = await client.query<{ fermee: boolean }>(
-            "SELECT fermee FROM ticket WHERE id_ticket = $1 LIMIT 1 FOR UPDATE",
+        const ticket = await client.query<{ ferme: boolean }>(
+            "SELECT ferme AS ferme FROM ticket WHERE id_ticket = $1 LIMIT 1 FOR UPDATE",
             [idTicket]
         );
 
@@ -181,13 +181,13 @@ export async function fermerTicket(
             return "ticket_introuvable";
         }
 
-        if (ticket.rows[0].fermee) {
+        if (ticket.rows[0].ferme) {
             await client.query("ROLLBACK");
             return "deja_ferme";
         }
 
         await client.query(
-            "UPDATE ticket SET fermee = TRUE, date_dernier_action = NOW() WHERE id_ticket = $1",
+            "UPDATE ticket SET ferme = TRUE, date_dernier_action = NOW() WHERE id_ticket = $1",
             [idTicket]
         );
 
